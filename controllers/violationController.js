@@ -138,23 +138,23 @@ export const getAllViolations = async (req, res) => {
       const limitNum = Math.min(Math.max(parseInt(limit) || 10, 1), 50);
       const skip = (pageNum - 1) * limitNum;
 
-      const [violations, total] = await Promise.all([
+      const [violations, total] = await Promise.all([ // tìm kiếm báo cáo vi phạm
          Violation.find(query)
-            .populate('reporterId', 'name email')
+            .populate('reporterId', 'name email') // lấy thông tin reporter
             .populate({
                path: 'driverId',
-               select: 'userId rating totalTrips status',
+               select: 'userId rating totalTrips status', // lấy thông tin driver
                populate: {
                   path: 'userId',
-                  select: 'name email phone avatarUrl'
+                  select: 'name email phone avatarUrl' // lấy thông tin user
                }
             })
-            .populate('orderId', 'pickupAddress dropoffAddress')
-            .populate('adminId', 'name')
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limitNum),
-         Violation.countDocuments(query)
+            .populate('orderId', 'pickupAddress dropoffAddress') // lấy thông tin order
+            .populate('adminId', 'name') // lấy thông tin admin
+            .sort({ createdAt: -1 }) // sắp xếp theo ngày tạo giảm dần
+            .skip(skip) // bỏ qua số lượng item
+            .limit(limitNum), // lấy số lượng item
+         Violation.countDocuments(query) // đếm số lượng báo cáo vi phạm
       ]);
 
       return res.json({
@@ -175,20 +175,20 @@ export const getAllViolations = async (req, res) => {
 // Admin: Cập nhật trạng thái báo cáo vi phạm
 export const updateViolationStatus = async (req, res) => {
    try {
-      const { violationId } = req.params;
+      const { violationId } = req.params; // lấy id báo cáo vi phạm từ params
       const { status, adminNotes, penalty, warningCount, banDriver, banDuration } = req.body;
 
-      const allowedStatuses = ['Pending', 'Investigating', 'Resolved', 'Dismissed'];
+      const allowedStatuses = ['Pending', 'Investigating', 'Resolved', 'Dismissed']; // kiểm tra trạng thái hợp lệ   ['Pending', 'Investigating', 'Resolved', 'Dismissed']
       if (!allowedStatuses.includes(status)) {
          return res.status(400).json({ success: false, message: 'Trạng thái không hợp lệ' });
       }
 
-      const updateData = {
+      const updateData = { // dữ liệu cập nhật
          status,
          adminId: req.user._id,
-         adminNotes,
-         penalty: penalty || 0,
-         warningCount: warningCount || 0
+         adminNotes, // ghi chú của admin
+         penalty: penalty || 0, // phạt tiền nếu có
+         warningCount: warningCount || 0 // số lần cảnh cáo nếu có
       };
 
       if (status === 'Resolved' || status === 'Dismissed') {
