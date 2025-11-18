@@ -1,0 +1,233 @@
+@startuml Delete Feedback - Sequence Diagram
+
+!theme plain
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 60
+
+title Delete Feedback - Sequence Diagram
+
+actor Admin as "Admin"
+participant FeedbackAdminPage as "FeedbackAdminPage\n(Admin)"
+participant FeedbackService as "FeedbackService"
+participant AxiosClient as "AxiosClient"
+participant FeedbackRoutes as "FeedbackRoutes"
+participant AuthMiddleware as "AuthMiddleware"
+participant FeedbackController as "FeedbackController"
+participant FeedbackModel as "Feedback\nModel"
+participant DriverModel as "Driver\nModel"
+participant DriverRatingHelper as "DriverRating\nHelper"
+database MongoDB as "MongoDB"
+
+== Scenario: Admin Deletes Feedback ==
+
+Admin -> FeedbackAdminPage: [1] View Feedback List
+activate FeedbackAdminPage
+
+FeedbackAdminPage -> FeedbackService: [2] getAllFeedbacks(params)
+activate FeedbackService
+FeedbackService -> AxiosClient: [3] GET /api/feedback/admin/all
+activate AxiosClient
+AxiosClient -> FeedbackRoutes: [4] HTTP GET
+activate FeedbackRoutes
+FeedbackRoutes -> AuthMiddleware: [5] authenticate() & authorize(ADMIN)
+activate AuthMiddleware
+AuthMiddleware --> FeedbackRoutes: [6] Authorized
+deactivate AuthMiddleware
+FeedbackRoutes -> FeedbackController: [7] getAllFeedbacks(req, res)
+activate FeedbackController
+FeedbackController -> FeedbackModel: [8] find(query).populate(...)
+activate FeedbackModel
+FeedbackModel -> MongoDB: [9] Query feedbacks
+MongoDB --> FeedbackModel: [10] Feedbacks list
+FeedbackModel --> FeedbackController: [11] Feedbacks data
+deactivate FeedbackModel
+FeedbackController --> FeedbackRoutes: [12] JSON response
+deactivate FeedbackController
+FeedbackRoutes --> AxiosClient: [13] HTTP 200 OK
+deactivate FeedbackRoutes
+AxiosClient --> FeedbackService: [14] Response
+deactivate AxiosClient
+FeedbackService --> FeedbackAdminPage: [15] Feedbacks list
+deactivate FeedbackService
+
+FeedbackAdminPage -> FeedbackAdminPage: [16] setFeedbacks(data)\nRender table
+FeedbackAdminPage --> Admin: [17] Display Feedback List\n(with Delete button)
+deactivate FeedbackAdminPage
+
+== Admin Confirms Deletion ==
+
+Admin -> FeedbackAdminPage: [18] Click "Xóa" button\non feedback row
+activate FeedbackAdminPage
+
+FeedbackAdminPage -> FeedbackAdminPage: [19] handleDeleteClick(feedback)
+
+FeedbackAdminPage -> FeedbackAdminPage: [20] setSelectedFeedback(feedback)\nsetDeleteModalVisible(true)
+
+FeedbackAdminPage --> Admin: [21] Display Delete Confirmation Modal\n(Show feedback details\nand warning message)
+
+Admin -> FeedbackAdminPage: [22] Click "Xác nhận xóa"
+Admin -> FeedbackAdminPage: [23] handleConfirmDelete()
+
+FeedbackAdminPage -> FeedbackService: [24] deleteFeedback(feedbackId)
+activate FeedbackService
+
+FeedbackService -> AxiosClient: [25] DELETE /api/feedback/admin/:feedbackId\n+ Bearer token
+activate AxiosClient
+
+AxiosClient -> FeedbackRoutes: [26] HTTP DELETE /api/feedback/admin/:feedbackId
+activate FeedbackRoutes
+
+FeedbackRoutes -> AuthMiddleware: [27] authenticate()
+activate AuthMiddleware
+AuthMiddleware -> AuthMiddleware: [28] Extract token from header
+AuthMiddleware -> AuthMiddleware: [29] Verify token & user
+AuthMiddleware --> FeedbackRoutes: [30] req.user (Admin)
+deactivate AuthMiddleware
+
+FeedbackRoutes -> AuthMiddleware: [31] authorize(roles.ADMIN)
+activate AuthMiddleware
+AuthMiddleware -> AuthMiddleware: [32] Check user.role === 'Admin'
+AuthMiddleware --> FeedbackRoutes: [33] Authorized
+deactivate AuthMiddleware
+
+FeedbackRoutes -> FeedbackController: [34] deleteFeedback(req, res)
+activate FeedbackController
+
+FeedbackController -> FeedbackController: [35] Extract feedbackId\nfrom req.params
+
+FeedbackController -> FeedbackModel: [36] findById(feedbackId)
+activate FeedbackModel
+FeedbackModel -> MongoDB: [37] Query feedback by ID
+MongoDB --> FeedbackModel: [38] Feedback document
+FeedbackModel --> FeedbackController: [39] Feedback object
+deactivate FeedbackModel
+
+alt If feedback not found
+    FeedbackController --> FeedbackRoutes: [40a] Error 404\n{success: false, message: "Không tìm thấy feedback"}
+    FeedbackRoutes --> AxiosClient: [41a] HTTP 404
+    deactivate FeedbackRoutes
+    AxiosClient --> FeedbackService: [42a] Error response
+    deactivate AxiosClient
+    FeedbackService --> FeedbackAdminPage: [43a] Error response
+    deactivate FeedbackService
+    FeedbackAdminPage -> FeedbackAdminPage: [44a] message.error("Không tìm thấy feedback")
+    FeedbackAdminPage --> Admin: [45a] Display error message
+    deactivate FeedbackAdminPage
+else If feedback found
+    FeedbackController -> FeedbackController: [40b] Extract driverId\nfrom feedback.driverId
+    
+    FeedbackController -> FeedbackModel: [41b] findByIdAndDelete(feedbackId)
+    activate FeedbackModel
+    FeedbackModel -> MongoDB: [42b] Delete feedback document
+    MongoDB --> FeedbackModel: [43b] Deleted feedback
+    FeedbackModel --> FeedbackController: [44b] Deleted feedback object
+    deactivate FeedbackModel
+    
+    FeedbackController -> DriverRatingHelper: [45b] updateDriverRating(driverId)
+    activate DriverRatingHelper
+    
+    DriverRatingHelper -> FeedbackModel: [46b] aggregate([\n  {$match: {driverId, status: 'Approved'}},\n  {$group: {avgRating: {$avg: '$overallRating'},\n            totalFeedbacks: {$sum: 1}}}\n])
+    activate FeedbackModel
+    FeedbackModel -> MongoDB: [47b] Calculate average rating\nfrom remaining approved feedbacks
+    MongoDB --> FeedbackModel: [48b] Stats {avgRating, totalFeedbacks}
+    FeedbackModel --> DriverRatingHelper: [49b] Rating statistics
+    deactivate FeedbackModel
+    
+    DriverRatingHelper -> DriverModel: [50b] findByIdAndUpdate(driverId,\n{rating: avgRating,\n totalFeedbacks: totalFeedbacks})
+    activate DriverModel
+    DriverModel -> MongoDB: [51b] Update driver rating\nand totalFeedbacks count
+    MongoDB --> DriverModel: [52b] Updated driver
+    DriverModel --> DriverRatingHelper: [53b] Success
+    deactivate DriverModel
+    
+    DriverRatingHelper --> FeedbackController: [54b] Driver rating updated
+    deactivate DriverRatingHelper
+    
+    FeedbackController -> FeedbackController: [55b] Format success response
+    
+    FeedbackController --> FeedbackRoutes: [56b] JSON response\n{success: true, message: "Đã xóa feedback thành công", data: {...}}
+    deactivate FeedbackController
+    
+    FeedbackRoutes --> AxiosClient: [57b] HTTP 200 OK
+    deactivate FeedbackRoutes
+    
+    AxiosClient --> FeedbackService: [58b] Success response
+    deactivate AxiosClient
+    
+    FeedbackService --> FeedbackAdminPage: [59b] response.data
+    deactivate FeedbackService
+    
+    FeedbackAdminPage -> FeedbackAdminPage: [60b] message.success("Đã xóa feedback thành công")\nsetDeleteModalVisible(false)
+    
+    FeedbackAdminPage -> FeedbackService: [61b] getAllFeedbacks() (refresh list)
+    activate FeedbackService
+    FeedbackService -> AxiosClient: [62b] GET /api/feedback/admin/all
+    activate AxiosClient
+    AxiosClient -> FeedbackRoutes: [63b] HTTP GET
+    activate FeedbackRoutes
+    FeedbackRoutes -> AuthMiddleware: [64b] authenticate() & authorize(ADMIN)
+    activate AuthMiddleware
+    AuthMiddleware --> FeedbackRoutes: [65b] Authorized
+    deactivate AuthMiddleware
+    FeedbackRoutes -> FeedbackController: [66b] getAllFeedbacks(req, res)
+    activate FeedbackController
+    FeedbackController -> FeedbackModel: [67b] find(query).populate(...)
+    activate FeedbackModel
+    FeedbackModel -> MongoDB: [68b] Query updated feedbacks list
+    MongoDB --> FeedbackModel: [69b] Updated feedbacks (without deleted one)
+    FeedbackModel --> FeedbackController: [70b] Feedbacks data
+    deactivate FeedbackModel
+    FeedbackController --> FeedbackRoutes: [71b] JSON response
+    deactivate FeedbackController
+    FeedbackRoutes --> AxiosClient: [72b] HTTP 200 OK
+    deactivate FeedbackRoutes
+    AxiosClient --> FeedbackService: [73b] Response
+    deactivate AxiosClient
+    FeedbackService --> FeedbackAdminPage: [74b] Updated feedbacks list
+    deactivate FeedbackService
+    
+    FeedbackAdminPage -> FeedbackAdminPage: [75b] setFeedbacks(data)\nRe-render table
+    FeedbackAdminPage --> Admin: [76b] Display Updated Feedback List\n(Feedback removed from list)
+    deactivate FeedbackAdminPage
+end
+
+== Alternative: Admin Cancels Deletion ==
+
+Admin -> FeedbackAdminPage: [77] Click "Hủy" button\nin delete modal
+activate FeedbackAdminPage
+
+FeedbackAdminPage -> FeedbackAdminPage: [78] handleCancelDelete()
+
+FeedbackAdminPage -> FeedbackAdminPage: [79] setDeleteModalVisible(false)
+
+FeedbackAdminPage --> Admin: [80] Close Delete Modal\n(No changes made)
+deactivate FeedbackAdminPage
+
+legend right
+  |<#LightBlue>Delete Flow|
+  Admin deletes inappropriate
+  or spam feedback from system.
+
+  |<#LightGreen>Rating Update|
+  After deletion, driver rating
+  is recalculated from remaining
+  approved feedbacks.
+
+  |<#LightYellow>Key Steps|
+  1. Admin confirms deletion
+  2. Feedback removed from DB
+  3. Driver rating recalculated
+  4. List refreshed automatically
+  5. Success message displayed
+endlegend
+
+@enduml
+
+
+
+
+
+
+
+
+

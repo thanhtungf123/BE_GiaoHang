@@ -85,6 +85,7 @@ export const createFeedback = async (req, res) => {
 
       return res.status(201).json({ success: true, data: feedback });
    } catch (error) {
+      console.error('Error creating feedback:', error);
       return res.status(500).json({ success: false, message: 'Lỗi tạo đánh giá', error: error.message });
    }
 };
@@ -213,6 +214,26 @@ export const getCustomerFeedbacks = async (req, res) => {
    }
 };
 
+// Lấy đánh giá của một đơn hàng cụ thể (cho tài xế xem feedback của họ)
+export const getOrderFeedbacks = async (req, res) => {
+   try {
+      const { orderId } = req.params;
+
+      // Tìm tất cả feedback cho đơn hàng này
+      const feedbacks = await Feedback.find({ orderId, status: 'Approved' })
+         .populate('customerId', 'name avatarUrl')
+         .populate('driverId', 'userId rating')
+         .sort({ createdAt: -1 });
+
+      return res.json({
+         success: true,
+         data: feedbacks
+      });
+   } catch (error) {
+      return res.status(500).json({ success: false, message: 'Lỗi lấy đánh giá đơn hàng', error: error.message });
+   }
+};
+
 // Admin: Lấy tất cả đánh giá
 export const getAllFeedbacks = async (req, res) => {
    try {
@@ -289,6 +310,63 @@ export const updateFeedbackStatus = async (req, res) => {
    }
 };
 
+// Driver phản hồi đánh giá
+export const respondToFeedback = async (req, res) => {
+   try {
+      const { feedbackId } = req.params;
+      const { response } = req.body;
+
+      const feedback = await Feedback.findByIdAndUpdate(
+         feedbackId,
+         { driverResponse: response },
+         { new: true }
+      );
+
+      if (!feedback) {
+         return res.status(404).json({ success: false, message: 'Không tìm thấy đánh giá' });
+      }
+
+      return res.json({ success: true, data: feedback });
+   } catch (error) {
+      return res.status(500).json({ success: false, message: 'Lỗi phản hồi đánh giá', error: error.message });
+   }
+};
+
+// Customer: Xóa đánh giá của mình
+export const deleteFeedback = async (req, res) => {
+   try {
+      const { feedbackId } = req.params;
+      const userId = req.user._id;
+
+      // Tìm feedback
+      const feedback = await Feedback.findById(feedbackId);
+      if (!feedback) {
+         return res.status(404).json({ success: false, message: 'Không tìm thấy đánh giá' });
+      }
+
+      // Kiểm tra quyền: chỉ customer tạo feedback mới được xóa
+      if (String(feedback.customerId) !== String(userId)) {
+         return res.status(403).json({ success: false, message: 'Bạn không có quyền xóa đánh giá này' });
+      }
+
+      // Lưu driverId và status trước khi xóa để cập nhật lại rating
+      const driverId = feedback.driverId;
+      const wasApproved = feedback.status === 'Approved';
+
+      // Xóa feedback
+      await Feedback.findByIdAndDelete(feedbackId);
+
+      // Nếu feedback đã được approved, cập nhật lại rating của driver
+      if (wasApproved && driverId) {
+         await updateDriverRating(driverId);
+      }
+
+      return res.json({ success: true, message: 'Xóa đánh giá thành công' });
+   } catch (error) {
+      return res.status(500).json({ success: false, message: 'Lỗi khi xóa đánh giá', error: error.message });
+   }
+};
+
 // Hàm helper: Cập nhật rating trung bình của driver
 async function updateDriverRating(driverId) {
    try {
@@ -308,6 +386,12 @@ async function updateDriverRating(driverId) {
          await Driver.findByIdAndUpdate(driverId, {
             rating: Math.round(avgRating * 10) / 10, // Làm tròn 1 chữ số thập phân
             totalFeedbacks
+         });
+      } else {
+         // Nếu không còn feedback nào, reset rating về 0
+         await Driver.findByIdAndUpdate(driverId, {
+            rating: 0,
+            totalFeedbacks: 0
          });
       }
    } catch (error) {

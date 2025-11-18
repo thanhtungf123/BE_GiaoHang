@@ -1,0 +1,382 @@
+@startuml View Reviews from Customers - Class Diagram
+
+!theme plain
+skinparam classAttributeIconSize 0
+
+' ============================================
+' FRONTEND LAYER
+' ============================================
+
+package "Frontend (React)" {
+    ' Driver Page Component
+    class DriverReviewsPage {
+        - loading: boolean
+        - feedbacks: array
+        - stats: object
+        - pagination: object
+        - filters: object
+        - driverId: string
+        --
+        + fetchFeedbacks()
+        + handleFilterChange(key, value)
+        + handlePageChange(page)
+        + render()
+    }
+
+    ' Admin Page Component
+    class AdminReviewsPage {
+        - loading: boolean
+        - feedbacks: array
+        - pagination: object
+        - filters: object
+        --
+        + fetchFeedbacks()
+        + handleFilterChange(key, value)
+        + render()
+    }
+
+    ' Display Component
+    class FeedbackDisplay {
+        - feedbacks: array
+        - stats: object
+        - showStats: boolean
+        - loading: boolean
+        --
+        + getStatusColor(status): string
+        + getStatusText(status): string
+        + render()
+    }
+
+    ' Service Layer
+    class FeedbackService {
+        + getDriverFeedbacks(driverId, params): Promise
+        + getAllFeedbacks(params): Promise
+        + getOrderFeedbacks(orderId): Promise
+    }
+
+    ' API Client
+    class AxiosClient {
+        - baseURL: string
+        - headers: object
+        --
+        + interceptors.request
+        + interceptors.response
+        + get(url, config): Promise
+    }
+
+    ' Endpoints
+    class FeedbackEndpoints {
+        {static} + driverFeedbacks(driverId): string
+        {static} + adminAllFeedbacks: string
+        {static} + orderFeedbacks(orderId): string
+    }
+}
+
+' ============================================
+' BACKEND LAYER - ROUTING
+' ============================================
+
+package "Backend - Routes" {
+    class FeedbackRoutes {
+        + router: Express.Router
+        --
+        + GET /api/feedback/driver/:driverId (Public)
+        + GET /api/feedback/admin/all (Admin only)
+        + GET /api/feedback/order/:orderId
+    }
+}
+
+' ============================================
+' BACKEND LAYER - MIDDLEWARE
+' ============================================
+
+package "Backend - Middleware" {
+    class AuthMiddleware {
+        {static} + authenticate(req, res, next)
+        {static} + authorize(...roles)
+    }
+
+    class Roles {
+        {static} + ADMIN: string
+        {static} + CUSTOMER: string
+        {static} + DRIVER: string
+    }
+}
+
+' ============================================
+' BACKEND LAYER - CONTROLLER
+' ============================================
+
+package "Backend - Controllers" {
+    class FeedbackController {
+        {static} + getDriverFeedbacks(req, res)
+        {static} + getAllFeedbacks(req, res)
+        {static} + getOrderFeedbacks(req, res)
+    }
+}
+
+' ============================================
+' BACKEND LAYER - MODELS
+' ============================================
+
+package "Backend - Models" {
+    class Feedback {
+        - _id: ObjectId
+        - orderId: ObjectId
+        - orderItemId: ObjectId
+        - customerId: ObjectId
+        - driverId: ObjectId
+        - overallRating: Number
+        - serviceRating: Number
+        - driverRating: Number
+        - vehicleRating: Number
+        - punctualityRating: Number
+        - comment: String
+        - photos: String[]
+        - status: String
+        - adminResponse: String
+        - driverResponse: String
+        - isAnonymous: Boolean
+        - helpfulCount: Number
+        - createdAt: Date
+        - updatedAt: Date
+        --
+        + find(query): Query
+        + populate(field): Query
+        + aggregate(pipeline): Promise
+        + countDocuments(query): Promise
+        + sort(sortBy): Query
+        + skip(n): Query
+        + limit(n): Query
+    }
+
+    class Driver {
+        - _id: ObjectId
+        - userId: ObjectId
+        - rating: Number
+        - totalFeedbacks: Number
+        - status: String
+        --
+        + findById(id): Query
+        + populate(field): Query
+    }
+
+    class Order {
+        - _id: ObjectId
+        - customerId: ObjectId
+        - pickupAddress: String
+        - dropoffAddress: String
+        - status: String
+        --
+        + findById(id): Query
+    }
+
+    class User {
+        - _id: ObjectId
+        - name: String
+        - email: String
+        - avatar: String
+        - avatarUrl: String
+        - role: String
+    }
+}
+
+' ============================================
+' DATA TRANSFER OBJECTS
+' ============================================
+
+package "DTOs" {
+    class FeedbackDTO {
+        + _id: ObjectId
+        + orderId: OrderDTO
+        + customerId: UserDTO
+        + driverId: DriverDTO
+        + overallRating: number
+        + serviceRating: number
+        + driverRating: number
+        + vehicleRating: number
+        + punctualityRating: number
+        + comment: string
+        + photos: string[]
+        + status: string
+        + isAnonymous: boolean
+        + driverResponse: string
+        + createdAt: Date
+    }
+
+    class FeedbackStatsDTO {
+        + total: number
+        + avgOverall: number
+        + avgService: number
+        + avgDriver: number
+        + avgVehicle: number
+        + avgPunctuality: number
+        + ratingCounts: RatingCountDTO[]
+    }
+
+    class RatingCountDTO {
+        + rating: number
+        + count: number
+    }
+
+    class FeedbackListResponseDTO {
+        + success: boolean
+        + data: FeedbackDTO[]
+        + stats: FeedbackStatsDTO
+        + meta: PaginationMetaDTO
+    }
+
+    class PaginationMetaDTO {
+        + page: number
+        + limit: number
+        + total: number
+        + totalPages: number
+    }
+
+    class UserDTO {
+        + _id: ObjectId
+        + name: string
+        + avatar: string
+        + avatarUrl: string
+    }
+
+    class OrderDTO {
+        + _id: ObjectId
+        + pickupAddress: string
+        + dropoffAddress: string
+    }
+
+    class DriverDTO {
+        + _id: ObjectId
+        + userId: UserDTO
+        + rating: number
+        + totalFeedbacks: number
+    }
+}
+
+' ============================================
+' RELATIONSHIPS
+' ============================================
+
+' Frontend relationships
+DriverReviewsPage ..> FeedbackService : uses
+DriverReviewsPage ..> FeedbackDisplay : uses
+AdminReviewsPage ..> FeedbackService : uses
+AdminReviewsPage ..> FeedbackDisplay : uses
+FeedbackDisplay ..> FeedbackDTO : displays
+FeedbackService ..> AxiosClient : uses
+FeedbackService ..> FeedbackEndpoints : uses
+AxiosClient ..> FeedbackRoutes : HTTP GET
+
+' Backend routing relationships
+FeedbackRoutes ..> AuthMiddleware : uses (for admin routes)
+FeedbackRoutes ..> FeedbackController : calls
+AuthMiddleware ..> Roles : uses
+
+' Controller relationships
+FeedbackController ..> Feedback : queries
+FeedbackController ..> Driver : queries (populate)
+FeedbackController ..> Order : queries (populate)
+FeedbackController ..> User : queries (populate)
+
+' Data flow
+FeedbackController ..> FeedbackListResponseDTO : returns
+Feedback ..> FeedbackDTO : maps to
+FeedbackController ..> FeedbackStatsDTO : aggregates to
+Feedback ..> RatingCountDTO : aggregates to
+
+' Model relationships
+Feedback --> Order : references (orderId)
+Feedback --> User : references (customerId)
+Feedback --> Driver : references (driverId)
+Driver --> User : references (userId)
+Order --> User : references (customerId)
+
+' Note relationships
+note right of DriverReviewsPage
+  Driver Component
+  - View all reviews about self
+  - Filter by rating
+  - View statistics
+  - Pagination support
+  - Public endpoint (no auth)
+end note
+
+note right of AdminReviewsPage
+  Admin Component
+  - View all reviews from customers
+  - Filter by status, rating, driverId
+  - Pagination support
+  - Admin authentication required
+end note
+
+note right of FeedbackDisplay
+  Display Component
+  - Shows feedback cards
+  - Displays ratings (overall & detailed)
+  - Shows customer info (anonymous if set)
+  - Displays photos
+  - Shows order information
+  - Statistics visualization
+end note
+
+note right of FeedbackController::getDriverFeedbacks
+  Driver Reviews Endpoint
+  - Public endpoint (no auth)
+  - Filters by driverId, status='Approved'
+  - Optional rating filter
+  - Returns feedbacks with populated:
+    * customerId (name, avatar)
+    * orderId (pickupAddress, dropoffAddress)
+  - Calculates statistics:
+    * Average ratings (overall, service, driver, vehicle, punctuality)
+    * Rating counts (1-5 stars)
+    * Total feedbacks
+  - Pagination support
+end note
+
+note right of FeedbackController::getAllFeedbacks
+  Admin All Reviews Endpoint
+  - Admin authentication required
+  - Filters: status, rating, driverId
+  - Returns all feedbacks with populated:
+    * customerId (name, email)
+    * driverId (userId)
+    * orderId (pickupAddress, dropoffAddress)
+  - Pagination support
+  - Sort by createdAt descending
+end note
+
+note right of Feedback
+  Status values:
+  - Pending (Chờ duyệt)
+  - Approved (Đã duyệt) - shown publicly
+  - Rejected (Từ chối) - hidden from public
+  
+  Rating scale: 1-5 stars
+  - overallRating (required)
+  - serviceRating (optional)
+  - driverRating (optional)
+  - vehicleRating (optional)
+  - punctualityRating (optional)
+end note
+
+note right of FeedbackStatsDTO
+  Statistics calculated:
+  - Total feedbacks count
+  - Average ratings (all categories)
+  - Rating distribution (1-5 stars)
+  - Used for driver profile display
+  - Helps customers make decisions
+end note
+
+@enduml
+
+
+
+
+
+
+
+
+

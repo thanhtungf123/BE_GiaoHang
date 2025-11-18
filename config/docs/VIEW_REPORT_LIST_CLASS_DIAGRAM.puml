@@ -1,0 +1,358 @@
+@startuml View Report List - Class Diagram
+
+!theme plain
+skinparam classAttributeIconSize 0
+
+' ============================================
+' FRONTEND LAYER
+' ============================================
+
+package "Frontend (React)" {
+    ' Admin Page Component
+    class ReportsPage {
+        - loading: boolean
+        - violations: array
+        - selectedViolation: object
+        - detailModalVisible: boolean
+        - updateModalVisible: boolean
+        - filters: object
+        - stats: object
+        - pagination: object
+        - form: FormInstance
+        --
+        + fetchViolations(page)
+        + calculateStats(data)
+        + handleViewDetail(violation)
+        + handleOpenUpdate(violation)
+        + handleUpdateStatus()
+        + render()
+    }
+
+    ' User Page Component
+    class Reports {
+        - reports: array
+        - loading: boolean
+        - filters: object
+        --
+        + fetchReports()
+        + handleFilterChange(key, value)
+        + handleRefresh()
+        + getStatusIcon(status)
+        + render()
+    }
+
+    ' Service Layer
+    class ViolationService {
+        + getAllViolations(params): Promise
+        + updateViolationStatus(violationId, payload): Promise
+        + getMyReports(params): Promise
+        + reportViolation(payload): Promise
+    }
+
+    ' API Client
+    class AxiosClient {
+        - baseURL: string
+        - headers: object
+        --
+        + interceptors.request
+        + interceptors.response
+        + get(url, config): Promise
+        + put(url, data, config): Promise
+    }
+
+    ' Endpoints
+    class ViolationEndpoints {
+        {static} + adminAllViolations: string
+        {static} + adminUpdateStatus(violationId): string
+        {static} + myReports: string
+        {static} + reportViolation: string
+    }
+}
+
+' ============================================
+' BACKEND LAYER - ROUTING
+' ============================================
+
+package "Backend - Routes" {
+    class ViolationRoutes {
+        + router: Express.Router
+        --
+        + POST /api/violations/report
+        + GET /api/violations/my-reports
+        + GET /api/violations/admin/all
+        + PUT /api/violations/admin/:violationId/status
+        + GET /api/violations/admin/stats
+    }
+}
+
+' ============================================
+' BACKEND LAYER - MIDDLEWARE
+' ============================================
+
+package "Backend - Middleware" {
+    class AuthMiddleware {
+        {static} + authenticate(req, res, next)
+        {static} + authorize(...roles)
+    }
+
+    class Roles {
+        {static} + ADMIN: string
+        {static} + CUSTOMER: string
+        {static} + DRIVER: string
+    }
+}
+
+' ============================================
+' BACKEND LAYER - CONTROLLER
+' ============================================
+
+package "Backend - Controllers" {
+    class ViolationController {
+        {static} + reportViolation(req, res)
+        {static} + getCustomerReports(req, res)
+        {static} + getAllViolations(req, res)
+        {static} + updateViolationStatus(req, res)
+        {static} + getViolationStats(req, res)
+    }
+}
+
+' ============================================
+' BACKEND LAYER - MODELS
+' ============================================
+
+package "Backend - Models" {
+    class Violation {
+        - _id: ObjectId
+        - reporterId: ObjectId
+        - driverId: ObjectId
+        - orderId: ObjectId
+        - orderItemId: ObjectId
+        - violationType: String
+        - description: String
+        - photos: String[]
+        - status: String
+        - adminId: ObjectId
+        - adminNotes: String
+        - penalty: Number
+        - warningCount: Number
+        - resolvedAt: Date
+        - severity: String
+        - isAnonymous: Boolean
+        - createdAt: Date
+        - updatedAt: Date
+        --
+        + find(query): Query
+        + findOne(query): Query
+        + findByIdAndUpdate(id, update, options): Query
+        + populate(field): Query
+        + countDocuments(query): Promise
+        + aggregate(pipeline): Promise
+    }
+
+    class Driver {
+        - _id: ObjectId
+        - userId: ObjectId
+        - status: String
+        - rating: Number
+        - incomeBalance: Number
+        - isOnline: Boolean
+        --
+        + findById(id): Query
+        + findByIdAndUpdate(id, update): Query
+        + populate(field): Query
+    }
+
+    class Order {
+        - _id: ObjectId
+        - customerId: ObjectId
+        - items: Array
+        - status: String
+        --
+        + findById(id): Query
+    }
+
+    class User {
+        - _id: ObjectId
+        - name: String
+        - email: String
+        - phone: String
+        - role: String
+        - avatarUrl: String
+    }
+}
+
+' ============================================
+' UTILITY LAYER
+' ============================================
+
+package "Backend - Utils" {
+    class EmailService {
+        {static} + sendDriverBannedEmail(email, name, reason, duration)
+        {static} + sendReportResolvedEmail(email, name, violationType, message)
+    }
+}
+
+' ============================================
+' DATA TRANSFER OBJECTS
+' ============================================
+
+package "DTOs" {
+    class ViolationDTO {
+        + _id: ObjectId
+        + reporterId: UserDTO
+        + driverId: DriverDTO
+        + orderId: OrderDTO
+        + violationType: string
+        + description: string
+        + photos: string[]
+        + status: string
+        + severity: string
+        + isAnonymous: boolean
+        + adminId: UserDTO
+        + adminNotes: string
+        + penalty: number
+        + warningCount: number
+        + resolvedAt: Date
+        + createdAt: Date
+    }
+
+    class ViolationListResponseDTO {
+        + success: boolean
+        + data: ViolationDTO[]
+        + meta: PaginationMetaDTO
+    }
+
+    class PaginationMetaDTO {
+        + page: number
+        + limit: number
+        + total: number
+        + totalPages: number
+    }
+
+    class ViolationStatsDTO {
+        + total: number
+        + pending: number
+        + investigating: number
+        + resolved: number
+        + dismissed: number
+    }
+
+    class UpdateViolationRequestDTO {
+        + status: string
+        + adminNotes: string
+        + penalty: number
+        + warningCount: number
+        + banDriver: boolean
+        + banDuration: string
+    }
+}
+
+' ============================================
+' RELATIONSHIPS
+' ============================================
+
+' Frontend relationships
+ReportsPage ..> ViolationService : uses
+Reports ..> ViolationService : uses
+ViolationService ..> AxiosClient : uses
+ViolationService ..> ViolationEndpoints : uses
+AxiosClient ..> ViolationRoutes : HTTP GET/PUT
+
+' Backend routing relationships
+ViolationRoutes ..> AuthMiddleware : uses
+ViolationRoutes ..> ViolationController : calls
+AuthMiddleware ..> Roles : uses
+
+' Controller relationships
+ViolationController ..> Violation : queries/updates
+ViolationController ..> Driver : updates
+ViolationController ..> Order : queries
+ViolationController ..> User : queries
+ViolationController ..> EmailService : uses
+
+' Data flow
+ViolationController ..> ViolationListResponseDTO : returns
+ViolationController ..> ViolationStatsDTO : returns
+Violation ..> ViolationDTO : maps to
+ViolationController ..> UpdateViolationRequestDTO : receives
+
+' Model relationships
+Violation --> User : references (reporterId)
+Violation --> Driver : references (driverId)
+Violation --> Order : references (orderId)
+Violation --> User : references (adminId)
+Driver --> User : references (userId)
+Order --> User : references (customerId)
+
+' Note relationships
+note right of ReportsPage
+  Admin Component
+  - View all violation reports
+  - Filter by status, type, severity
+  - View report details
+  - Update report status
+  - Ban driver if needed
+  - Calculate statistics
+end note
+
+note right of Reports
+  User Component
+  - View own violation reports
+  - Filter by status
+  - Track report status
+end note
+
+note right of ViolationController::getAllViolations
+  Admin: View All Reports
+  - Filters: status, violationType, driverId, severity
+  - Pagination support
+  - Populates reporter, driver, order, admin
+  - Returns list with metadata
+end note
+
+note right of ViolationController::getCustomerReports
+  Customer: View Own Reports
+  - Filters by reporterId (current user)
+  - Optional status filter
+  - Pagination support
+  - Populates driver, order, admin
+end note
+
+note right of ViolationController::updateViolationStatus
+  Admin: Update Report Status
+  - Updates violation status
+  - Applies penalty (deducts from driver balance)
+  - Can ban driver (updates driver status)
+  - Sends emails:
+    * Driver banned notification
+    * Report resolved notification
+  - Updates resolvedAt timestamp
+end note
+
+note right of Violation
+  Status values:
+  - Pending (Chờ xử lý)
+  - Investigating (Đang điều tra)
+  - Resolved (Đã xử lý)
+  - Dismissed (Đã bác bỏ)
+  
+  Violation types:
+  - LatePickup, LateDelivery
+  - RudeBehavior, DamagedGoods
+  - Overcharging, UnsafeDriving
+  - NoShow, Other
+  
+  Severity levels:
+  - Low, Medium, High, Critical
+end note
+
+@enduml
+
+
+
+
+
+
+
+
+

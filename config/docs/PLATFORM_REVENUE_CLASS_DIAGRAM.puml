@@ -1,0 +1,258 @@
+@startuml Platform Revenue - Class Diagram
+
+!theme plain
+skinparam classAttributeIconSize 0
+
+' ============================================
+' FRONTEND LAYER
+' ============================================
+
+package "Frontend (React)" {
+    class RevenueDashboard {
+        - timeFilter: string
+        - loading: boolean
+        - revenueData: array
+        - totals: object
+        - driversWithRevenue: array
+        - loadingDrivers: boolean
+        --
+        + useEffect()
+        + fetchRevenueData()
+        + fetchDriversWithRevenue()
+        + formatCurrency(value): string
+        + render()
+    }
+
+    class AdminService {
+        + getSystemRevenueStats(params): Promise
+        + getDriversWithRevenue(params): Promise
+    }
+
+    class AxiosClient {
+        - baseURL: string
+        - headers: object
+        --
+        + interceptors.request
+        + interceptors.response
+        + get(url, config): Promise
+        + post(url, data, config): Promise
+    }
+
+    class AdminEndpoints {
+        {static} + systemRevenue: string
+        {static} + driversWithRevenue: string
+    }
+}
+
+' ============================================
+' BACKEND LAYER - ROUTING
+' ============================================
+
+package "Backend - Routes" {
+    class AdminRoutes {
+        + router: Express.Router
+        --
+        + GET /api/admin/revenue/system
+        + GET /api/admin/drivers/revenue
+    }
+}
+
+' ============================================
+' BACKEND LAYER - MIDDLEWARE
+' ============================================
+
+package "Backend - Middleware" {
+    class AuthMiddleware {
+        {static} + authenticate(req, res, next)
+        {static} + authorize(...roles)
+    }
+
+    class Roles {
+        {static} + ADMIN: string
+        {static} + DRIVER: string
+        {static} + CUSTOMER: string
+    }
+}
+
+' ============================================
+' BACKEND LAYER - CONTROLLER
+' ============================================
+
+package "Backend - Controllers" {
+    class AdminController {
+        {static} + getSystemRevenueStats(req, res)
+        {static} + getDriversWithRevenue(req, res)
+    }
+}
+
+' ============================================
+' BACKEND LAYER - MODELS
+' ============================================
+
+package "Backend - Models" {
+    class DriverTransaction {
+        - _id: ObjectId
+        - driverId: ObjectId
+        - orderId: ObjectId
+        - amount: Number
+        - fee: Number
+        - netAmount: Number
+        - type: String
+        - status: String
+        - transactionDate: Date
+        - createdAt: Date
+        --
+        + aggregate(pipeline): Promise
+        + find(query): Query
+    }
+
+    class Driver {
+        - _id: ObjectId
+        - userId: ObjectId
+        - status: String
+        - rating: Number
+        - incomeBalance: Number
+        - avatarUrl: String
+        --
+        + find(query): Query
+        + populate(field): Query
+    }
+
+    class Order {
+        - _id: ObjectId
+        - customerId: ObjectId
+        - status: String
+        - totalPrice: Number
+        --
+        + find(query): Query
+        + aggregate(pipeline): Promise
+    }
+
+    class User {
+        - _id: ObjectId
+        - name: String
+        - email: String
+        - phone: String
+        - role: String
+        - avatarUrl: String
+    }
+}
+
+' ============================================
+' DATA TRANSFER OBJECTS
+' ============================================
+
+package "DTOs" {
+    class RevenueStatsDTO {
+        + label: string
+        + period: object
+        + totalDriverRevenue: number
+        + totalSystemRevenue: number
+        + totalDriverPayout: number
+        + totalOrders: number
+    }
+
+    class RevenueTotalsDTO {
+        + totalDriverRevenue: number
+        + totalSystemRevenue: number
+        + totalDriverPayout: number
+        + totalOrders: number
+    }
+
+    class DriverRevenueDTO {
+        + _id: ObjectId
+        + name: string
+        + email: string
+        + phone: string
+        + avatarUrl: string
+        + status: string
+        + rating: number
+        + incomeBalance: number
+        + totalRevenue: number
+        + totalSystemFee: number
+        + totalDriverPayout: number
+        + totalOrders: number
+    }
+
+    class RevenueResponseDTO {
+        + success: boolean
+        + data: RevenueStatsDTO[]
+        + totals: RevenueTotalsDTO
+        + meta: object
+    }
+}
+
+' ============================================
+' RELATIONSHIPS
+' ============================================
+
+' Frontend relationships
+RevenueDashboard ..> AdminService : uses
+AdminService ..> AxiosClient : uses
+AdminService ..> AdminEndpoints : uses
+AxiosClient ..> AdminRoutes : HTTP GET
+
+' Backend routing relationships
+AdminRoutes ..> AuthMiddleware : uses
+AdminRoutes ..> AdminController : calls
+AuthMiddleware ..> Roles : uses
+
+' Controller relationships
+AdminController ..> DriverTransaction : queries
+AdminController ..> Driver : queries
+AdminController ..> Order : queries
+AdminController ..> User : queries
+
+' Data flow
+AdminController ..> RevenueResponseDTO : returns
+AdminController ..> DriverRevenueDTO : returns
+DriverTransaction ..> RevenueStatsDTO : aggregates to
+Driver ..> DriverRevenueDTO : maps to
+
+' Model relationships
+DriverTransaction --> Driver : references (driverId)
+DriverTransaction --> Order : references (orderId)
+Driver --> User : references (userId)
+
+' Note relationships
+note right of RevenueDashboard
+  React Component
+  - Fetches revenue data
+  - Displays charts and statistics
+  - Shows driver list with revenue
+end note
+
+note right of AdminController::getSystemRevenueStats
+  Aggregates DriverTransaction:
+  - Groups by period (day/week/month/year)
+  - Calculates totalDriverRevenue (sum amount)
+  - Calculates totalSystemRevenue (sum fee = 20%)
+  - Calculates totalDriverPayout (sum netAmount = 80%)
+  - Counts totalOrders
+end note
+
+note right of AdminController::getDriversWithRevenue
+  - Fetches all drivers
+  - For each driver, aggregates transactions
+  - Calculates revenue statistics
+  - Returns driver list with revenue data
+end note
+
+note right of DriverTransaction
+  Type: 'OrderEarning'
+  Status: 'Completed'
+  amount = Total revenue from order
+  fee = 20% platform commission
+  netAmount = 80% driver payout
+end note
+
+@enduml
+
+
+
+
+
+
+
+
+

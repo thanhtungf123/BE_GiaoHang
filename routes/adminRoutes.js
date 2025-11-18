@@ -94,7 +94,7 @@ router.get('/withdrawals/:requestId', getWithdrawalRequestDetail);
  * ADMIN: CHẤP THUẬN YÊU CẦU RÚT TIỀN
  * POST /api/admin/withdrawals/:requestId/approve
  * Body: { adminNote? }
- * 
+ *
  * Logic:
  * - Trừ tiền từ driver.incomeBalance
  * - Tạo DriverTransaction với type: 'Withdrawal'
@@ -117,3 +117,4 @@ router.post('/withdrawals/:requestId/reject', rejectWithdrawalRequest);
 router.post('/withdrawals/:requestId/complete', completeWithdrawalRequest);
 
 export default router;
+

@@ -1,0 +1,10 @@
+#,Screen/Function,Feature,Actor,Screen/Function Description
+1,Login,Sign in with Google,"Customer, Driver, Admin","Provides an alternative login method using Google OAuth for faster access."
+2,Profile,Change Password,"Customer, Driver","Allows authenticated users to change their current password from the account settings for security purposes."
+3,Admin Dashboard,View Payments List,Admin,"Enables the admin to view and track all payment transactions processed on the platform."
+4,Admin Dashboard,Refund of Fees,"Admin, Customer","Allows customers to request and admins to process refunds for applicable fees or orders."
+5,Admin Dashboard,View Feedbacks List,Admin,"Allows the admin to review a list of user-submitted feedback and comments."
+6,Admin Dashboard,Delete Feedback,Admin,"Grants the admin authority to remove inappropriate or resolved feedback from the system."
+7,Admin Dashboard,View Statistics,Admin,"Provides the admin with a dashboard of key platform KPIs (users, orders, revenue, driver status, etc.)."
+8,Notification,Send Notification,Admin,"Allows the system or an administrator to send notifications to users regarding orders, promotions, or important updates."
+

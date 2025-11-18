@@ -1,0 +1,3268 @@
+
+
+
+
+
+
+CAPSTONE PROJECT REPORT
+Report 3 – Software Requirement Specification
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+– Danang, May 2025 –
+Table of Contents
+
+
+
+Record of Changes
+5
+
+
+
+Software Requirement Specification
+6
+
+
+
+Product Overview
+6
+
+
+
+User Requirements
+6
+
+
+
+Actors
+6
+
+
+
+Use Cases
+8
+
+
+
+Diagram(s)
+8
+
+
+
+Use Case Descriptions
+13
+
+
+
+Functional Requirements
+15
+
+
+
+System Functional Overview
+15
+
+
+
+Screens Flow
+15
+
+
+
+Screen Descriptions
+17
+
+
+
+Screen Authorization
+19
+
+
+
+Non-Screen Functions
+21
+
+
+
+Entity Relationship Diagram
+22
+
+
+
+Authentication
+29
+
+
+
+Registration
+29
+
+
+
+Login
+30
+
+
+
+Forgot password
+31
+
+
+
+User Account Management
+32
+
+
+
+View List User Accounts
+32
+
+
+
+View List Drivers
+33
+
+
+
+View Driver Detail
+
+
+
+View User Profile
+
+
+
+Update User Profile
+
+
+
+Update Avatar
+
+
+
+Upload Image
+34
+
+
+
+Job Management
+35
+
+
+
+View Job List
+35
+
+
+
+View Job Detail
+36
+
+
+
+Create Job Post
+37
+
+
+
+View Job Post
+38
+
+
+
+Edit Job Post
+39
+
+
+
+Delete Job Post
+40
+
+
+
+Search for job
+41
+
+
+
+Hide Job Posting
+42
+
+
+
+Approve Job Posting
+43
+
+
+
+Add To Favourite
+44
+
+
+
+Apply For Job
+45
+
+
+
+Candidate Management
+46
+
+
+
+Search For Candidate
+46
+
+
+
+View Candidate’s Profile
+47
+
+
+
+View List Favourite Job
+48
+
+
+
+Profile &amp; CV Management
+49
+
+
+
+View List Of CV Applied
+49
+
+
+
+View CV detail
+50
+
+
+
+Create CV
+51
+
+
+
+Edit CV
+52
+
+
+
+Delete CV
+53
+
+
+
+View profile information
+54
+
+
+
+Upload CV
+55
+
+
+
+Chat and Meeting
+56
+
+
+
+Chat
+56
+
+
+
+Reports Management
+57
+
+
+
+Report Candidate
+57
+
+
+
+Report Content
+59
+
+
+
+View List Reports
+60
+
+
+
+Approve or Reject Reports
+60
+
+
+
+Transactions Management
+61
+
+
+
+View Transactions History
+61
+
+
+
+Download Transaction List
+62
+
+
+
+Subscription Plans Management
+64
+
+
+
+View Subscription Plans
+64
+
+
+
+Buy Subscription Plans
+64
+
+
+
+Create Subscription Plans
+65
+
+
+
+Update Subscription Plans
+67
+
+
+
+Delete Subscription Plans
+68
+
+
+
+Employer Management
+69
+
+
+
+Employer Verification
+69
+
+
+
+View Company’s Profile
+69
+
+
+
+Search Employers
+70
+
+
+
+Notifications &amp; Alerts Management
+71
+
+
+
+View System Notifications
+71
+
+
+
+Register for contextual notifications
+72
+
+
+
+Turn Off Notifications
+73
+
+
+
+Non-Functional Requirements
+74
+
+
+
+External Interfaces
+74
+
+
+
+Software Interfaces
+74
+
+
+
+User Interfaces
+74
+
+
+
+Quality Attributes
+74
+
+
+
+Usability
+74
+
+
+
+Reliability
+75
+
+
+
+Performance
+75
+
+
+
+Security
+75
+
+
+
+Requirement Appendix
+75
+
+
+
+Business Rules
+75
+
+
+
+Common Requirements
+79
+
+
+
+Application Messages List
+79
+
+
+
+Other Requirements
+80
+
+Table of Tables
+
+Table 1. Record of Changes
+6
+Table 2. Actors
+12
+Table 3. Use case Descriptions
+17
+Table 4. Screen Descriptions
+19
+Table 5. Screen Authorization
+21
+Table 6. Non-Screen Functions
+22
+Table 7. Entities Description
+28
+Table 8. Business Rules
+79
+Table 9. Common Requirements
+79
+Table 10. Application Messages List
+80
+Table of Figures
+
+Figure 1. Context diagram
+7
+Figure 2. WorkSmart Use Case Diagram
+8
+Figure 3. Guest Use Case Subsystem
+9
+Figure 4. Candidate Use Case Subsystem
+10
+Figure 5. Employer Use Case Subsystem
+11
+Figure 6. Admin Use Case Subsystem
+12
+Figure 7. Guest screen flow diagram
+15
+Figure 8. Candidate screen flow diagram
+16
+Figure 9. Employer screen flow diagram
+16
+Figure 10. Admin Screen Flow diagram
+17
+Figure 11. Entity Relationship Diagram
+22
+
+
+
+Record of Changes
+
+Date
+A* M, D
+
+In charge
+
+Change Description
+22/9/2025
+A
+All members
+Initiating
+1/10/2025
+M
+All members
+Updated functional scope and feedback process.
+14/10/2025
+M
+All members
+Modified ERD, added job application and interview tables.
+17/10/2025
+M
+All members
+Improved database, added subscription dates, enhanced CV CRUD.
+18/10/2025
+M
+All members
+Updated use cases, Admin flow, and fixed ERD relationships.
+24/10/2025
+M
+All members
+Finalized product background and report, prepared for code demo.
+16/11/2025
+M
+All members
+Update uc diagram, db and day capstone
+22/11/2025
+M
+All members
+Update table of content, review report
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*A - Added M - Modified D - Deleted
+Table 1. Record of Changes
+
+
+Software Requirement Specification
+
+
+Product Overview
+The Bengo Platform is an online system designed to seamlessly connect passengers with transportation providers for mass transit solutions. Key features include intelligent route and vehicle recommendations, detailed driver and fleet profiles, real-time in-app chat, subscription management for businesses, and advanced trip tracking tools. The platform aims to empower transportation partners with powerful fleet management and dispatch tools, while providing passengers with a smooth, efficient, and reliable commuting experience. With integrated notifications, multiple payment gateways, and AI-based ride-matching and route optimization, Bengo is designed to streamline mass transportation processes, ensuring high user satisfaction and scalability for metropolitan and regional use.
+
+
+Figure 1. Context diagram
+
+
+User Requirements
+
+
+Actors
+
+
+#
+
+Actor
+
+Description
+
+1
+
+Guest
+A user who can access the platform without logging in. Guests can view the landing page, perform basic searches for available shipments, and learn about the platform's features. They cannot place bids, accept shipments, save shipments, or interact with shippers until they create an account.
+
+
+
+2
+
+Driver
+A user who has created an account to find shipment loads. They can bid on shipments, manage their profile (company information, vehicles), upload relevant documents (insurance, vehicle inspection), and track shipment progress. They can also save favorite shipments, chat with shippers, and confirm trip completion.
+
+3
+
+Administrator
+The administrator oversees the entire system and ensures smooth operation. They have full control over user accounts (ban/activate/delete), approve or reject shipment postings (if moderation is required), resolve violation reports, manage subscription plans (if any), and monitor system analytics and financial transactions.
+
+Table 2. Actors
+
+
+Use Cases
+
+
+Diagram(s)
+
+
+Use case for overview WorkSmart
+
+Below is an overview of the use cases for the WorkSmart.
+
+
+
+
+Figure 2. WorkSmart Use Case Diagram
+
+
+Use Case for Customer
+Below is a subsystem use case for the Guest actor.
+
+Figure 3. Guest Use Case Subsystem
+
+
+Use Case for Drives
+Below is a subsystem use case for the Candidate actor.
+
+Figure 4. Candidate Use Case Subsystem
+
+
+Use Case for Admin
+Below is a subsystem use case for the Admin actor.
+
+
+Figure 6. Admin Use Case Subsystem
+
+
+Use Case Descriptions
+ID
+Use Case
+Actors
+Use Case Description
+
+01
+
+Sign in
+Customer, Drives, Admin
+Allows users to sign in using email and password.
+
+02
+
+Sign in with Google
+Customer, Drives, Admin
+Allows users to log in using their Google account.
+03
+
+Register
+Customer
+Enables new visitors to create an account by providing personal information.
+
+04
+
+Log Out
+Customer, Drives, Admin
+Allows users to log out from their account.
+05
+Forgot Password
+Customer, Drives, Admin
+Enables users to reset their password via a reset link sent to their email.
+06
+View Profile
+Customer, Drives, Admin
+Allows users to view their profile details.
+
+07
+
+Edit Profile
+Customer, Drives, Admin
+This use case allows users to edit their personal information.
+
+08
+
+Change Password
+Customer, Drives, Admin
+This use case allows authenticated users to change their password from their account
+settings.
+
+09
+
+Upgrade to Driver
+
+Customer
+Allows a customer to apply and upgrade their account to a driver.
+10
+View Driver Registration List
+Admin
+Allows admin to view the list of pending driver registration applications.
+11
+Refund of Fees
+Admin, Customer
+Allows admin to process and customers to request a refund for fees.
+
+12
+View Order History
+
+Customer, Driver, Admin
+Allows users to view a list of their past orders.
+
+13
+
+View Detailed Order
+Customer, Driver, Admin
+Allows users to view the detailed information of a specific order.
+
+14
+
+ Payment
+Customer
+Allows customer to make a payment for an order.
+15
+View Vehicle Type
+Customer
+Allows users to view the available types of vehicles on the platform.
+16
+View Delivery History
+Driver
+Allows driver to view their completed delivery/ride history.
+17
+View Platform Revenue
+Admin
+Allows admin to view the total revenue and financial reports of the platform.
+
+
+ID
+Use Case
+Actors
+Use Case Description
+
+18
+View Account List
+
+Admin
+Allows admin to view and manage the list of all user accounts.
+19
+CRUD Vouchers
+Admin
+Allows admin to Create, Read, Update, and Delete voucher codes.
+20
+CRUD Fees
+Admin
+Allows admin to Create, Read, Update, and Delete fee types and amounts.
+21
+Set Driver Status
+Driver
+Allows driver to set their current status .
+22
+View Reviews from Guests
+Driver, Admin
+Allows driver and admin to view reviews and feedback left by guests/customers..
+23
+Cancel Ride
+Customer, Driver
+Allows a customer or driver to cancel an ongoing or scheduled ride.
+24
+Send Notification
+Admin
+The system or admin can send notifications to users about orders, promotions, etc.
+25
+Manage Drivers
+Admin
+Allows admin to view, activate, suspend, and manage driver accounts.
+
+26
+View Payments List
+Admin
+Enables the admin to track payments made by employers.
+
+27
+View Reports List
+Admin
+Allows the admin to review reported content or user violations.
+
+28
+View Feedbacks List
+Admin
+Enables the admin to review feedback
+submitted by users.
+29
+Delete Feedback
+Admin
+Allows the admin to remove inappropriate or spam feedback.
+
+30
+
+View Static
+
+Admin
+Allows the admin to monitor platform statistics, including users, job posts, subscriptions, and feedback.
+
+
+Table 3. Use case Descriptions
+
+
+
+Functional Requirements
+
+
+System Functional Overview
+
+
+Screens Flow
+
+Figure 7. Guest screen flow diagram
+
+
+Figure 8. Basic user screen flow diagram
+
+Figure 9. Driver screen flow diagram
+
+Figure 10. Admin Screen Flow diagram
+
+
+
+Screen Descriptions
+
+
+#
+
+Feature
+
+Screen
+
+Description
+
+1
+
+
+
+
+
+
+
+
+Authentication
+
+Register
+Non-logged in users can register for an account to become a Basic user or Driver.
+
+2
+
+
+Login
+Users can log in using their credentials. Supports forgot password via OTP.
+
+3
+
+
+Forgot Password
+Allows users to recover their password via email verification.
+
+4
+
+
+Verify OTP
+Screen for entering the OTP received by email to verify identity.
+
+5
+
+
+Reset Password
+Allows users to set a new password after verification process.
+
+6
+
+
+Change Password
+
+Change the existing account password.
+
+
+
+#
+
+Feature
+
+Screen
+
+Description
+
+7
+Profile management
+Profile
+
+Basic user, driver view and edit their own profile
+
+8
+
+Chat
+
+Message
+Private messaging system between Employer and Candidate.
+
+9
+
+Notifications
+
+Notification
+
+List of system notifications.
+  10
+  Profile setting
+Setting
+  Basic user, driver change their normal setting.
+
+11
+
+
+User Account Management
+Manage User Screen
+
+Admin can ban, unban, delete users, and export user data.
+
+12
+
+
+Dashboard
+View summary of activities (ongoing order, daily transaction, driver).
+
+13
+
+Transaction Management
+
+Transaction history
+
+Basic user, driver can view transaction records.
+
+14
+
+Transaction history screen
+
+Admin views all transactions.
+
+15
+
+
+
+Order management
+
+Order tracking
+
+Basic user, driver can track the order
+
+16
+
+
+Ongoing order
+
+Admin view all ongoing order
+
+17
+Reports Management
+
+Manage Report
+
+Admin reviews and manages violation reports.
+
+
+
+Table 4. Screen Descriptions
+
+
+
+Screen Authorization
+
+
+Screen
+Guest
+Basic user
+Driver
+Admin
+Homepage
+X
+X
+X
+X
+Register
+X
+X
+X
+X
+Login
+X
+X
+X
+X
+Forgot Password
+X
+X
+X
+X
+Verify OTP
+X
+X
+X
+
+Reset Password
+
+X
+X
+X
+
+Change Password
+
+X
+X
+
+Ongoing order
+
+
+
+X
+Order tracking
+
+X
+X
+
+Setting
+
+X
+X
+
+Manage User Screen
+
+
+
+X
+Dashboard
+
+X
+X
+X
+Message
+
+X
+X
+
+Notification
+
+X
+X
+
+Manage Report Screen
+
+
+
+X
+Transaction History
+
+X
+X
+
+Transaction History Screen
+
+
+
+X
+3rd payment online
+
+X
+X
+
+
+
+Table 5. Screen Authorization
+
+
+Non-Screen Functions
+
+#
+Feature
+System Function
+Description
+1
+User Account Verification
+Email Verification Automation
+Automatically sends email verification links to new users (Candidates/Employers) upon registration to confirm their accounts.
+2
+Notification Management
+Scheduled Email/SMS
+Notifications
+Sends out email notifications to Candidates for new matching jobs or to Employers about new
+applications to their job posts.
+
+Table 6. Non-Screen Functions
+
+
+Entity Relationship Diagram
+
+
+Figure 11. Entity Relationship Diagram
+
+
+
+
+Entities Description
+#
+Entity
+Description
+
+
+
+
+
+1
+
+
+
+
+
+users
+Description: Stores customer information. Properties:
+
+
+_id
+
+
+name
+
+
+email
+
+
+phone
+
+
+passwordHash
+
+
+role
+
+
+Address
+
+
+isEmailVerified
+
+
+refreshToken
+
+
+createdAt
+
+
+updatedAt
+
+
+
+
+
+
+2
+
+
+
+
+
+
+drivers
+Description: Stores driver information
+Properties:
+- _id
+- userId
+- status
+- rating
+- totalTrips
+- incomeBalance
+- isOnline
+- createAt
+- updateAt
+
+
+
+
+3
+
+
+
+
+vehicles
+Description: Stores vehicle information
+Properties:
+
+
+_id
+
+
+driverId
+
+
+Type
+
+
+licensePlate
+
+
+maxWeightKg
+
+
+vehicleDocs
+
+
+createdAt
+
+
+updatedAt
+
+
+
+
+
+
+4
+
+
+
+
+
+
+payments
+Description: Stores payment information
+Properties:
+
+
+_id
+
+
+orderId
+
+
+method
+
+
+amount
+
+
+status
+
+
+createAt
+
+
+updateAt
+
+
+
+
+5
+
+
+
+
+orders
+Description: Stores orders/trip information
+Properties:
+
+
+_id
+
+
+customerId
+
+
+pickupAddress
+
+
+dropoffAddress
+
+
+items
+
+
+totalPrice
+
+
+createAt
+
+
+updateAt
+
+
+
+
+6
+
+
+
+
+feedbacks
+Description: Stores rating information of each trip
+Properties:
+
+
+_id
+
+
+orderId
+
+
+customerId
+
+
+driverId
+
+
+rating
+
+
+comment
+
+
+createdAt
+
+
+updatedAt
+
+
+
+
+7
+
+
+
+
+insurances
+Description: Stores insurance information of each trip
+Properties:
+
+
+_id
+
+
+orderId
+
+
+provider
+
+
+amount
+
+
+status
+
+
+createdAt
+
+
+updatedAt
+8
+violations
+Description: Stores penalty of drivers
+Properties:
+
+
+_id
+
+
+driverId
+
+
+orderId
+
+
+reason
+
+
+penalty
+
+
+createdAt
+
+
+updatedAt
+9
+drivertransactions
+Description: Stores transactions of drivers
+Properties:
+
+
+_id
+
+
+driverId
+
+
+orderId
+
+
+type
+
+
+amount
+
+
+balanceAfter
+
+
+description
+
+
+createdAt
+
+
+updatedAt
+10
+otps
+Description: OTP
+Properties:
+
+
+_id
+
+
+userId
+
+
+code
+
+
+purpose
+
+
+expiresAt
+
+
+used
+
+
+createdAt
+
+
+updatedAt
+11
+items
+Description: Items of each order/trip
+Properties:
+
+
+vehicleType
+
+
+weightKg
+
+
+distanceKm
+
+
+loadingService
+
+
+insurance
+
+
+priceBreakdown
+
+
+status
+
+
+driverId
+12
+priceBreakdown
+Description: Price if breakdown happens
+Properties:
+
+
+basePerKm
+
+
+distanceCost
+
+
+insuranceFee
+
+
+total
+
+
+
+
+
+
+
+
+
+
+
+
+Table 7. Entities Description
+
+
+Authentication
+
+
+Registration
+
+
+Function trigger: The user clicks on the “Register” link on the Login page or accesses the Register page with a link.
+
+
+Function description: Customers, drivers or administrators can create an account on the Bengo system to use the service. The registration process requires basic information and OTP verification via email.
+
+
+Screen layout:
+
+
+
+
+Function details:
+
+
+Data: Include Full Name, Email, Password, Phone, Role
+
+
+Validation:
+
+
+Email must be in the correct format and not already in the system.
+
+
+Phone number must be in the correct format and not already in the system.
+
+
+Password does not require special security rules (can contain letters, numbers, lowercase characters).
+
+
+OTP verification code must be correct and valid.
+
+
+Business rule: BR-01, BR-02, BR-03
+
+
+Functionality:
+
+
+In Normal Cases: If all information is valid, the system saves the account, sends OTP code to email, displays the message “Registration successful! Please check your email to verify your account.”
+
+
+In Abnormal Cases: 
+
+
+Email or phone number already exists → displays error message “Email or phone number already in use.”
+
+
+Invalid or expired OTP → displays error message “OTP code is invalid or expired.”
+
+
+
+
+
+Login
+
+
+
+
+Function trigger: The user presses “Login” on the main page or from any page that requires authentication.
+
+
+Function description: Users log in to the system using their registered email and password.
+
+
+
+Screen layout:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Function details:
+
+
+Data: Include Email or Phone and Password
+
+
+Validation:
+
+
+Email/Phone number must exist in the system.
+
+
+Password must match the information stored in the database.
+
+
+Account must have successfully verified email (isEmailVerified = true).
+
+
+Business rule: BR-04, BR-05
+
+
+Functionality:
+
+
+In Normal Cases: If the information is valid, the system authenticates and issues a JWT token to the user, then redirects to the home page or dashboard.
+
+
+
+
+
+
+
+
+Forgot password
+
+
+
+In Abnormal Cases:
+
+
+Incorrect email or password → “Incorrect email or password.”
+
+
+Unverified account → “Please verify email before logging in.”
+
+
+Locked account → “Account temporarily locked. Please try again later.”
+
+
+Function trigger: Users click &quot;Forgot Password&quot; on the login page when they forget their password.
+
+
+Function description: The system allows users to reset their password via OTP sent to the registered email.
+
+
+Screen layout:
+
+
+
+
+Function details:
+
+
+Data: Include email, otp, new password, confirm new password
+
+
+Validation:
+Email must be valid and exist in the system.
+OTP must be correct and valid.
+New password and confirmation must match.
+
+
+Business rule: BR-06,BR-07
+
+
+Functionality:
+
+
+In Normal Cases: The system sends a verification OTP via email. When the user enters the correct OTP, the password is updated and a message “Password reset successful” is displayed.
+
+
+In Abnormal Cases: 
+
+
+Invalid or expired OTP → “OTP code is invalid or expired.”
+
+
+Email does not exist → “Email is not registered in the system.”
+
+
+
+User Account Management
+
+
+View List User Accounts
+
+
+Function trigger: The admin clicks on the &quot;User Management&quot; tab or selects &quot;View All Users&quot; from the admin dashboard.
+
+
+Function description: The admin can view a paginated and searchable list of all user accounts registered in the Bengo system. The list displays basic user information and supports filtering by role, keyword, and status.
+
+
+Screen layout:
+
+
+
+Function details:
+
+
+
+
+
+
+Data: User ID, Name, Email, Phone,Role, Email verification status,
+Account Status, Created date, Last login date
+
+
+Validation:
+
+
+The system verifies admin privileges before displaying user data.
+
+
+Only authenticated Admin accounts can access this feature.
+
+
+Business rule: BR-10, BR-11
+
+
+Functionality:
+
+
+In Normal Cases: 
+
+
+The system retrieves the user list with pagination (default 20 users per page, max 100).
+
+
+If filters (e.g. role, search) are provided, the results are narrowed accordingly.
+
+
+The admin can navigate between pages and view summary metadata (page, limit, total pages).
+
+
+In Abnormal Cases: If the database connection fails → message: &quot;Unable to retrieve user accounts. Please try again later.&quot;. If no users match filters → &quot;No users match your search criteria.&quot;
+
+
+View List Drivers
+
+
+Function trigger: The admin selects the &quot;Driver List&quot; option from the sidebar or clicks the &quot;Drivers&quot; tab in the User Management section.
+
+
+Function description: Allows the admin to view and manage all drivers in the system, including their linked user info, vehicle, and registration status.
+
+
+Screen layout:
+
+
+
+Function details:
+
+
+Data: Driver ID, User info (name, email, phone), Status, Rating, Total trips, Income balance, Registration date
+
+
+Validation:
+
+
+Only Admin users can access this list.
+
+
+The system ensures proper role-based authorization.
+
+
+Business rule: BR-12
+
+
+Functionality:
+
+
+In Normal Cases: The system retrieves drivers with pagination, supports search by name/email/phone, and filters by status.
+
+
+In Abnormal Cases: 
+
+
+If no driver matches → &quot;No drivers found.&quot;
+
+
+If DB fails → &quot;Unable to retrieve driver list.&quot;
+
+
+View Driver Detail
+
+
+Function trigger: The admin clicks on a specific driver in the list.
+
+
+Function description: Shows full driver profile, vehicle info, recent transactions, and earnings summary.
+
+
+Screen layout:
+
+
+
+Function details:
+
+
+Data: Driver info (status, rating, serviceAreas, avatarUrl),Linked user info: (name, email, phone, address), Vehicle list (if available), Order stats (Created, Completed, Cancelled), Transaction list (latest 10), Total earnings (netAmount, fee).
+
+
+Validation:
+
+
+Verify driver exists.
+
+
+Only admin authorized accounts can view detailed data.
+
+
+Business rule: BR-13
+
+
+Functionality:
+
+
+In Normal Cases: The system aggregates data from multiple collections (Driver, User, Order, DriverTransaction) and returns combined info.
+
+
+In Abnormal Cases: 
+
+
+&quot;Không tìm thấy tài xế&quot; if not found.
+
+
+&quot;Lỗi lấy thông tin tài xế&quot; if query fails.
+
+
+3.3.4 View User Profile
+
+
+Function trigger: The user clicks on &quot;My Profile&quot; from the navigation bar.
+
+
+Function description: Displays personal information (name, email, phone, address, avatar) for the logged-in user.
+
+
+Screen layout:
+
+
+
+Function details:
+
+
+Data: name, email, phone, address, avatarUrl, role.
+
+
+Validation:
+
+
+The system checks that a valid JWT token is provided.
+
+
+Functionality:
+
+
+In Normal Cases: Returns profile info excluding passwordHash.
+
+
+In Abnormal Cases: 
+
+
+If user not found → &quot;Không tìm thấy người dùng&quot;.
+
+
+If error → &quot;Lỗi khi lấy thông tin profile&quot;.
+
+
+
+
+
+3.3.5 Update User Profile
+
+
+Function trigger: The user updates fields and clicks “Save Changes” on the Profile page.
+
+
+Function description: Allows a logged-in user to update name, phone, or address.
+
+
+Screen layout:
+
+
+
+Function details:
+
+
+Data: name, address..
+
+
+Validation:
+
+
+name is required.
+
+
+Functionality:
+
+
+In Normal Cases: Updates user info and returns new profile.
+
+
+In Abnormal Cases: 
+
+
+Missing name → &quot;Tên không được để trống&quot;.
+
+
+User not found → &quot;Không tìm thấy người dùng&quot;.
+
+
+System error → &quot;Lỗi khi cập nhật thông tin profile&quot;.
+
+
+3.3.6 Update Avatar
+
+
+Function trigger: The user uploads or selects a new profile picture.
+
+
+Function description: Updates the user’s avatar URL. For Driver role, also updates the linked driver profile.
+
+
+Screen layout:
+
+
+
+Function details:
+
+
+Data: avatarUrl (string)
+
+
+Validation:
+
+
+URL cannot be empty.
+
+
+Functionality:
+
+
+In Normal Cases: Updates avatar for both User and Driver.
+
+
+In Abnormal Cases: 
+
+
+No URL → &quot;URL avatar không được để trống&quot;.
+
+
+User not found → &quot;Không tìm thấy người dùng&quot;.
+
+
+System error → &quot;Lỗi khi cập nhật avatar&quot;.
+
+
+3.3.7 Upload Image
+
+
+Function trigger: The user uploads an image for avatar, license, or other verification.
+
+
+Function description: Uploads one or multiple images to Cloudinary and returns secure URLs.
+
+
+Screen layout:
+
+
+
+Function details:
+
+
+Data: file (Buffer), folder (optional)
+
+
+Validation:
+
+
+At least one file required.
+
+
+Functionality:
+
+
+In Normal Cases: Returns upload metadata (url, publicId, width, height, format).
+
+
+In Abnormal Cases: 
+
+
+Missing file → &quot;Không có file được upload&quot;.
+
+
+Upload failed → &quot;Lỗi khi upload ảnh&quot;.
+
+
+
+
+
+
+Driver Rating
+
+
+Rate Driver
+Function trigger: The user clicks on the &quot;Rate Driver&quot; button from the completed trip details page or receives a rating prompt after trip completion.
+
+Function description: The user can submit ratings and feedback for a specific driver after a completed trip.
+
+Screen layout:
+
+
+Driver information section (Name, Photo, License Plate)
+
+Star rating selector (1-5 stars)
+
+Rating criteria checkboxes
+
+Comment input field
+
+Submit and Cancel buttons
+
+Function details:
+
+Data:
+
+Driver Information (Name, Photo, License Plate)
+
+Trip Details (Date, Route, Fare)
+
+Rating Score (1-5 stars)
+
+Rating Categories (Punctuality, Driving Safety, Service Attitude, Vehicle Cleanliness)
+
+User Comments
+
+Rating Timestamp
+
+Validation:
+
+The system ensures only completed trips can be rated
+
+Users can only rate each trip once
+
+Rating must be submitted within 7 days of trip completion
+
+Business rule: BR-12
+
+Functionality:
+
+In Normal Cases: The system successfully submits the rating, updates the driver's average score, and displays a confirmation message.
+
+In Abnormal Cases:
+
+If no rating score is selected: &quot;Please select a rating score&quot;
+
+If rating submission fails: &quot;Unable to submit rating, please try again later&quot;
+
+If rating period has expired: &quot;Rating period for this trip has expired&quot;
+
+If user has already rated this trip: &quot;You have already rated this trip&quot;
+
+
+View Delivered Order Details
+Function trigger: The user clicks on a specific delivered order from the order history list.
+
+Function description: The user can view detailed information about a specific order that has been delivered.
+
+Screen layout:
+
+Order header section
+
+Customer information
+
+Delivery information
+
+Order items list
+
+Payment information
+
+Status timeline
+
+Function details:
+
+Data:
+
+Order ID
+
+Order Date &amp; Time
+
+Customer Name &amp; Phone
+
+Delivery Address
+
+Delivery Date &amp; Time
+
+Order Items (Product Name, Quantity, Price)
+
+Subtotal
+
+Delivery Fee
+
+Total Amount
+
+Payment Method
+
+Payment Status
+
+Delivery Person Name
+
+Delivery Rating (if rated)
+
+Order Status Timeline
+
+Validation:
+
+The system ensures only delivered orders are accessible
+
+Business rule: BR-15
+
+Functionality:
+
+In Normal Cases: The system successfully retrieves and displays the complete order details.
+
+In Abnormal Cases:
+
+If the order cannot be found: &quot;Order not found or no longer available&quot;
+
+If there's a server issue: &quot;Unable to load order details, please try again later&quot;
+
+If the user doesn't have permission to view the order: &quot;You don't have permission to view this order&quot;
+
+
+
+View Delivered Orders List
+
+
+Function trigger: The driver clicks on the &quot;Delivered Orders&quot; tab or navigates to the delivered orders page from the main menu.
+
+
+
+
+
+Function description: The driver can view a list of all orders they have successfully delivered.
+
+
+
+
+
+Screen layout:
+
+
+
+
+
+Search and filter section
+
+
+List of delivered order cards
+
+
+Summary statistics section
+
+
+Function details:
+
+
+Data:
+
+
+Order ID
+
+
+Customer Name
+
+
+Delivery Address
+
+
+Delivery Date &amp; Time
+
+
+Total Order Value
+
+
+Delivery Fee
+
+
+Customer Rating (if available)
+
+
+Order Status (Delivered)
+
+
+Delivery Distance
+
+
+Validation:
+
+
+The system ensures only completed/delivered orders by the driver are displayed
+
+
+Business rule: BR-18
+
+
+Functionality:
+
+
+In Normal Cases: The system successfully retrieves and displays the list of delivered orders.
+
+
+In Abnormal Cases:
+
+
+If there are no delivered orders: &quot;No delivered orders found&quot;
+
+
+If there's a server issue: &quot;Unable to load delivered orders, please try again later&quot;
+
+
+If the driver hasn't delivered any orders yet: &quot;You haven't delivered any orders yet&quot;
+
+
+
+
+
+View Available Vehicle Types
+
+
+Function trigger: The user clicks on the &quot;Vehicle Types&quot; section or enters the booking flow from the homepage.
+
+
+
+
+
+Function description: The user can view a list of available vehicle types for booking.
+
+
+Screen layout:
+
+
+
+
+
+
+
+
+Vehicle type selection grid
+
+
+Filter options (by capacity, price range, etc.)
+
+
+Vehicle type cards with key information
+
+
+Function details:
+
+
+Data:
+
+
+Vehicle Type Name
+
+
+Vehicle Icon/Image
+
+
+Capacity (Number of seats)
+
+
+Base Fare
+
+
+Price per Kilometer
+
+
+Estimated Wait Time
+
+
+Vehicle Features (AC, Luggage space, etc.)
+
+
+Available Units
+
+
+Validation:
+
+
+The system ensures only active and available vehicle types are displayed
+
+
+Business rule: BR-09
+
+
+Functionality:
+
+
+In Normal Cases: The system successfully retrieves and displays available vehicle types.
+
+
+In Abnormal Cases:
+
+
+If there are no available vehicle types: &quot;No vehicles available in your area at the moment&quot;
+
+
+If there's a server issue: &quot;Unable to load vehicle types, please try again later&quot;
+
+
+If location services are disabled: &quot;Please enable location services to see available vehicles&quot;
+
+
+
+
+
+View Rating List
+
+
+Function trigger: The user clicks on the &quot;Ratings&quot; tab or navigates to the rating list page from the profile.
+
+
+Function description: The user can view a list of all ratings they have given or received.
+
+
+Screen layout:
+
+
+
+
+
+
+
+
+Filter options (Given/Received ratings, date range, rating score)
+
+
+List of rating cards
+
+
+Average rating summary
+
+
+Function details:
+
+
+Data:
+
+
+Rating ID
+
+
+Rated Person Name (Driver/User)
+
+
+Rating Score (1-5 stars)
+
+
+Rating Date
+
+
+Rating Comments
+
+
+Trip/Order Details
+
+
+Rating Categories (if applicable)
+
+
+Response to Rating (if any)
+
+
+Validation:
+
+
+The system ensures only valid and authorized ratings are displayed
+
+
+Business rule: BR-21
+
+
+Functionality:
+
+
+In Normal Cases: The system successfully retrieves and displays the rating list.
+
+
+In Abnormal Cases:
+
+
+If there are no ratings: &quot;No ratings found&quot;
+
+
+If there's a server issue: &quot;Unable to load ratings, please try again later&quot;
+
+
+If the user has no rating history: &quot;You don't have any ratings yet&quot;
+
+
+
+
+
+View Driver Activity Status
+
+
+Function trigger: The driver clicks on the &quot;Activity Status&quot; section or the system administrator accesses the driver management panel.
+
+
+Function description: The driver can view and manage their current activity status, while administrators can monitor driver availability.
+
+
+Screen layout:
+
+
+
+
+
+Current status indicator
+
+
+Status change buttons
+
+
+Online/Offline timer
+
+
+Today's activity summary
+
+
+Status history log
+
+
+Function details:
+
+
+Data:
+
+
+Current Status (Online, Offline, Busy, On Break)
+
+
+Last Status Change Time
+
+
+Today's Online Duration
+
+
+Total Active Hours
+
+
+Status Change History
+
+
+Next Available Time (if on break)
+
+
+Current Location (if online)
+
+
+Validation:
+
+
+The system validates driver documents and vehicle information before allowing online status
+
+
+Business rule: BR-14
+
+
+Functionality:
+
+
+In Normal Cases: The system successfully updates and displays the driver's activity status.
+
+
+In Abnormal Cases:
+
+
+If documents are expired: &quot;Cannot go online - documents require renewal&quot;
+
+
+If vehicle inspection is pending: &quot;Cannot go online - vehicle inspection required&quot;
+
+
+If there's a server issue: &quot;Unable to update status, please try again later&quot;
+
+
+If location services are disabled: &quot;Please enable location services to go online&quot;
+
+
+
+
+
+Driver Withdrawal
+
+
+Function trigger: The driver clicks the &quot;Withdrawal&quot; tab in the Driver Dashboard or selects &quot;Request withdrawal&quot;.
+
+
+Function description: The driver can submit a payout request from their available balance and view a paginated history of withdrawal requests with statuses and details. Drivers may cancel a pending request before it is processed.
+
+
+Screen layout:
+
+
+
+Function details:
+
+
+
+
+
+
+Data: Amount (currency, VND), Payout method: Bank transfer, Bank name, Account holder name, Account number, Note (optional).
+
+
+Validation:
+
+
+Driver must be authenticated and have an Active driver profile.
+
+
+Amount &gt;= Minimum withdrawal amount; Amount &lt;= Withdrawable balance.
+
+
+Bank info required and valid format.
+
+
+Optional: Daily request limit not exceeded.
+
+
+Business rule:
+
+
+
+BR-WD-01: Fee = configured fixed or percentage; Net = Amount − Fee.
+
+
+BR-WD-02: When request is Pending/Processing, the requested amount is held and excluded from available balance.
+
+
+BR-WD-03: Driver can cancel only while status = Pending.
+
+
+BR-WD-04: System logs all status changes and notifies driver in real time.
+
+
+BR-WD-05: Admin processes and marks requests; driver is read-only for processed items.
+
+
+Functionality:
+
+
+In Normal Cases: 
+
+
+Submit withdrawal:
+
+
+System validates driver status, balance, and form fields.
+
+
+System creates a request with status = Pending, computes fee/net, updates held balance, and returns success.
+
+
+Driver sees success toast and the new record at the top of history.
+
+
+View balance and history:
+
+
+System shows current balance and withdrawable amount.
+
+
+History is retrieved with pagination (default 10 per page, max 50), sortable by date, filterable by status/date range.
+
+
+View detail:
+
+
+Driver opens a request to see full metadata, timeline, and admin notes.
+
+
+Cancel request:
+
+
+If status = Pending, system cancels the request, releases held amount, and updates history.
+
+
+In Abnormal Cases:
+
+
+Insufficient balance or below minimum → “Amount exceeds available balance” or “Below minimum”.
+
+
+Invalid bank info → field-level errors.
+
+
+Daily limit exceeded → “Daily withdrawal limit reached; try again tomorrow.”
+
+
+Backend error → “Unable to create withdrawal request. Please try again later.”
+
+
+Cancelling non-pending → “Only pending requests can be cancelled.”
+
+
+
+
+
+Driver Revenue Reports &amp; Receipts
+
+
+Function trigger: Driver opens the “Revenue” tab or selects “Export report” / “View receipt”.
+
+
+Function description: Drivers view earnings over a time range, filter/search transactions, open order receipts, and export reports (CSV/PDF).
+
+
+Screen layout:
+
+
+
+Function details:
+
+
+
+
+
+
+Data: 
+
+
+
+
+
+
+Summary: totalGross, totalFee, totalNet, tripCount.
+
+
+
+
+
+
+Transactions[]: { id, orderId, createdAt, type, status, gross, fee, net, note }.
+
+
+
+
+
+
+Receipt: order info, distance/weight breakdown, surcharges, promotions, platform fee, driver net, payment method, reference code.
+
+
+Validation:
+
+
+Authenticated driver with Active status.
+
+
+Valid date range (e.g., max 92 days).
+
+
+page and limit within bounds.
+
+
+Business rule:
+
+
+
+BR-RV-01: net = gross − fee (rounded per config).
+
+
+BR-RV-02: Only Settled counts toward withdrawable balance.
+
+
+BR-RV-03: Adjustments may be positive or negative; included in net.
+
+
+BR-RV-04: Receipts are visible only for the driver who fulfilled the order.
+
+
+BR-RV-05: Large exports run as a background job; a download link is sent via notification.
+
+
+Functionality:
+
+
+In Normal Cases: 
+
+
+View summary based on current filters.
+
+
+Browse history with pagination and sorting.
+
+
+Open a receipt; allow print/download PDF.
+
+
+Export CSV/PDF for current filters; show “generating file” when queued.
+
+
+In Abnormal Cases:
+
+
+Range too wide → “Please narrow your date range.”
+
+
+No data → empty state.
+
+
+Server error/timeout → “Unable to load revenue. Please try again later.”
+
+
+Accessing another driver’s receipt → 403.
+
+
+
+
+
+Báo cáo vi phạm:Vũ
+
+
+
+
+
+Payment:Vũ
+
+
+
+
+
+View Reports List:Vũ
+
+
+
+
+
+
+
+
+Cancel Ride:Vũ
+
+
+
+
+
+View Platform Revenue:Vũ
+
+
+
+
+
+
+
+
+
+
+
+Non-Functional Requirements
+
+
+External Interfaces
+
+
+Software Interfaces
+
+
+The system is compatible with popular web browsers and their latest versions.
+
+
+User Interfaces
+
+
+The system employs appropriate notification mechanisms that don't disrupt the user experience.
+
+
+Quality Attributes
+
+
+Usability
+
+
+Training Time
+
+
+Regular users: Can become proficient within one work session.
+
+
+Advanced users: Can familiarize themselves with advanced features within half a day.
+
+
+Operation completion times:
+
+
+Account registration: Completed within a few minutes.
+
+
+Job searching: Quick and convenient.
+
+
+Service payment: Simple with minimal steps.
+
+
+Feedback submission: Easy and fast.
+
+
+Reliability
+
+
+Operation level: The system operates continuously with minimal downtime.
+
+
+Fault tolerance: The system maintains basic functions in case of incidents.
+
+
+Recovery time: Issues are resolved promptly.
+
+
+Quality: Ensures the lowest possible number of system errors.
+
+
+Performance
+
+
+Response Time
+
+
+Ensures fast response times under normal usage conditions.
+
+
+Maintains stable performance during peak hours.
+
+
+Throughput
+The system shall support a throughput of at least 100 transactions per second under normal operating conditions, ensuring seamless user interactions during peak usage times.
+
+
+Capacity
+
+
+Meets the needs of multiple simultaneous users.
+
+
+Handles a large volume of daily transactions.
+
+
+Resource Utilization
+
+
+Optimizes server resource usage.
+
+
+Security
+
+
+Data protection: Applies appropriate protection measures for personal information and payment data.
+
+
+Secure login: Uses reliable user authentication methods.
+
+
+
+Requirement Appendix
+
+
+Business Rules
+
+ID
+Rule Definition
+BR-01
+One email or phone number can only create one account.
+BR-02
+OTP is valid for 5 minutes from the time of sending.
+BR-03
+User must verify email successfully to be allowed to log in.
+BR-04
+Users can only log in if the account has been verified via email.
+BR-05
+After 3 consecutive failed login attempts, the account is temporarily locked for 10 minutes.
+BR-06
+OTP is valid for 5 minutes.
+BR-07
+User can request to resend OTP up to 3 times.
+BR-08
+Users can only change their password when they are logged in.
+BR-09
+After changing the password, the user will be asked to log in again.
+BR-10
+Only admin users can access the user management page.
+BR-11
+Passwords are not displayed (field passwordHash excluded).
+BR-12
+Admin can view all driver data for monitoring and verification.
+BR-13
+Driver data must be linked to a valid User record.
+
+
+ID
+Rule Definition
+BR-14
+The system should only display CVs that match the selected job post or search criteria.
+BR-15
+Users can only change their own password.
+BR-16
+After successfully changing the password, the user needs to log in again.
+BR-17
+If you enter the wrong password more than the specified number of times (for example, 3 times), your account may be temporarily locked.
+BR-18
+The user must enter the correct email registered in the system.
+BR-19
+The reset token has an expiration time (eg 1 hour).
+BR-20
+The new password must be different from the old password.
+BR-21
+User is logged in
+BR-22
+Users can only view their own personal information.
+BR-23
+Only the CV owner or authorized employer can view, edit, delete or download the CV.
+BR-24
+The CV must exist in the system; otherwise, an error message is shown.
+BR-25
+Users must provide essential personal details, at least one skill, and valid education and experience details
+BR-26
+Only .jpg and .png formats are allowed.
+BR-27
+Skills: Max 50 characters per skill.
+BR-28
+Experience Description: Max 500 characters.
+BR-29
+Education must include a valid degree, institution, and year range.
+BR-30
+Experience must include company name, position, and description.
+BR-31
+Only the CV owner or an authorized admin can delete the CV.
+BR-32
+The system verifies that the CV exists before processing deletion.
+BR-33
+Users must confirm deletion via a confirmation dialog before the action is executed.
+BR-34
+Users must enter at least one search criterion (job title, location, or tags).
+BR-35
+Experience level, salary range, and work type must match predefined values.
+BR-36
+Only valid city names and locations are accepted.
+BR-37
+Employers must verify email, tax ID, and business license before being able to post jobs or view applicant lists.
+BR-38
+Can be viewed by all users, including guests who do not need to log in.
+BR-39
+Reports must include reporter, target, reason, and timestamp.
+BR-40
+Actions must be logged with admin ID and decision timestamp.
+BR-41
+Approved reports trigger workflow (e.g., hide content, notify user).
+BR-42
+Notification preference flag is set to &quot;off&quot; or “on” in user preferences table.
+BR-39
+Admin must have proper authorization to create/update/delete subscription plans
+BR-40
+Package names must be unique within the system
+
+
+ID
+Rule Definition
+BR-41
+Subscription plans must have at least one feature enabled
+BR-42
+Price must be in multiples of 1,000 VND
+BR-43
+Duration must be at least 1 day and not exceed 365 days
+
+BR-44
+Existing users with active subscriptions to the plan being updated are not affected until renewal
+BR-45
+Plan type (Employer/Candidate) cannot be changed once created
+BR-46
+A subscription plan cannot be deleted if it has active users subscribed to it
+BR-47
+Users with active subscriptions retain access until their current subscription expires
+BR-48
+Deletion requires confirmation to prevent accidental removal
+
+BR-49
+Deleted plans should be archived for historical reporting rather than permanently removed
+BR-50
+Only job owners or administrators can hide job postings
+BR-51
+Hidden jobs are not visible in search results or job listings
+BR-52
+Applications already received for hidden jobs remain accessible
+BR-53
+Job status changes from &quot;Active&quot; to &quot;Hidden&quot; when hidden
+BR-54
+Users who have already applied to or favorited this job will still see it in their history
+BR-55
+Only administrators can approve or reject job postings
+BR-56
+All job postings must be reviewed before being published
+BR-57
+Administrators must provide comments when rejecting or requesting changes
+BR-58
+Approved jobs become visible in job listings immediately
+BR-59
+Job approval should be completed within 24 hours of submission
+
+
+ID
+Rule Definition
+BR-60
+Jobs that violate platform guidelines must be rejected with specific reasons
+BR-61
+Users must be logged in to add jobs to favorites
+BR-62
+Users can add a maximum of 50 jobs to their favorites list
+BR-63
+Users can remove jobs from their favorites at any time
+
+BR-64
+If a job is deleted or hidden, it remains in favorites but is marked as &quot;No longer available&quot;
+BR-65
+Adding to favorites does not notify the employer
+
+BR-66
+Users can receive notifications about updates to their favorited jobs if enabled in settings
+BR-67
+Users must be logged in with a complete profile to apply for jobs
+BR-68
+Users can apply for a job only once
+BR-69
+Users must submit at least one CV with their application
+BR-70
+Users must answer all required screening questions
+BR-71
+Users can withdraw their application before employer action
+BR-72
+Users with premium subscriptions receive priority application status
+BR-73
+Application status updates trigger notifications to candidates
+BR-74
+Transaction data must be securely handled and encrypted during download
+BR-75
+Personal financial information should be protected according to data privacy regulations
+BR-76
+Downloaded files should include a timestamp and unique identifier
+BR-77
+Large transaction lists should be paginated or split into multiple files
+BR-78
+The system should log all download activities for security auditing
+
+
+ID
+Rule Definition
+BR-79
+Downloaded files should include a disclaimer about confidentiality
+BR-80
+The uploaded file must be in .pdf or .docx format.
+BR-81
+File size must not exceed 5MB.
+BR-82
+Only one CV file is allowed per user at any time.
+BR-83
+If a new CV is uploaded, the old one is automatically replaced.
+BR-84
+File names must not include forbidden special characters.
+BR-85
+Only verified employers can view full candidate profiles.
+BR-86
+Candidate profile must exist and be active.
+BR-87
+CV file access should follow platform's visibility rules (e.g., private/public).
+BR-88
+Only logged-in users can access their saved jobs list.
+BR-89
+Deleted or expired jobs should be clearly marked or hidden.
+BR-90
+The list must be paginated if it exceeds a certain number of entries.
+Table 8. Business Rules
+
+
+
+Common Requirements
+
+#
+Requirement
+Description
+1
+Users must be authenticated (verified login) before creating CV, ….
+This ensures that only registered users can access job and candidate data
+Table 9. Common Requirements
+
+
+
+Application Messages List
+
+#
+Message code
+Message Type
+Context
+Content
+1
+MSG01
+In line
+There is no search result
+No search results.
+2
+MSG02
+In red, under the text box
+Input-required fields are empty
+The * field is required.
+
+
+#
+Message code
+Message Type
+Context
+Content
+3
+MSG03
+Toast message
+Updating asset(s) information successfully
+Update asset(s) successfully.
+4
+MSG04
+Toast message
+Adding new assets successfully
+Add assets successfully.
+
+5
+
+MSG05
+
+Toast message
+Confirming email of asset hand-over is sent successfully
+A confirmation email has been sent to
+{email_address}.
+6
+MSG06
+Toast message
+Resetting asset information successfully
+Return asset(s) successfully.
+7
+MSG07
+Toast message
+Deleting asset information successfully
+Delete asset(s) successfully.
+8
+MSG08
+In red, under the text box
+Input value length &gt; max length
+Exceed max length of
+{max_length}.
+
+9
+
+MSG09
+
+In line
+The username or password is not correct when clicking sign-in
+Incorrect username or password. Please check again.
+10
+MSG10
+Toast message
+When Google login fails
+Google login failed. Please try again.
+11
+MSG11
+Toast message
+When Google login is successful
+&quot;Google login successful!&quot;
+
+12
+
+MSG12
+
+Toast message
+When a user doesn't input a username or password
+&quot;User and Password is required!&quot;
+13
+MSG13
+Toast message
+When login is successful
+&quot;Login success!&quot;
+
+14
+
+MSG14
+
+Toast message
+When an incorrect username or password is entered
+&quot;Incorrect username or password. Please check again.&quot;
+
+15
+
+MSG15
+
+Toast message
+Error Message (Form Error)
+&quot;8 characters, 1
+uppercase, and 1 special&quot;
+16
+MSG16
+Toast message
+Error Message (Form Error)
+&quot;Passwords do not match&quot;
+
+17
+
+MSG17
+
+Toast message
+
+Success Message
+&quot;Registration successful!
+&lt;br /&gt; Please Check your email&quot;
+18
+MSG18
+In yellow, under the button
+Pending Status Message
+&quot;Registering...&quot;
+19
+MSG19
+In yellow, under the button
+Pending Status Message
+&quot;Logging...&quot;
+Table 10. Application Messages List
+
+
+Other Requirements
