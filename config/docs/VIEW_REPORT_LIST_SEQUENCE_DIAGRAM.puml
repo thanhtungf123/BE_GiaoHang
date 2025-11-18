@@ -1,0 +1,413 @@
+@startuml View Report List - Sequence Diagram
+
+!theme plain
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 60
+
+title View Report List - Sequence Diagram
+
+' ============================================
+' SCENARIO 1: ADMIN VIEW ALL REPORTS
+' ============================================
+
+== Scenario 1: Admin Views All Reports ==
+
+actor Admin as "Admin"
+participant ReportsPage as "ReportsPage\n(Admin)"
+participant ViolationService as "ViolationService"
+participant AxiosClient as "AxiosClient"
+participant ViolationRoutes as "ViolationRoutes"
+participant AuthMiddleware as "AuthMiddleware"
+participant ViolationController as "ViolationController"
+participant ViolationModel as "Violation\nModel"
+participant DriverModel as "Driver\nModel"
+participant UserModel as "User\nModel"
+database MongoDB as "MongoDB"
+
+Admin -> ReportsPage: [1] Navigate to Reports Page
+activate ReportsPage
+
+ReportsPage -> ReportsPage: [2] Initialize state\n(loading, violations, filters, stats)
+
+ReportsPage -> ViolationService: [3] getAllViolations(params)\n{page, limit, status, violationType, severity}
+activate ViolationService
+
+ViolationService -> AxiosClient: [4] GET /api/violations/admin/all\n+ Bearer token\n+ query params
+activate AxiosClient
+
+AxiosClient -> ViolationRoutes: [5] HTTP GET /api/violations/admin/all?page=1&limit=10...
+activate ViolationRoutes
+
+ViolationRoutes -> AuthMiddleware: [6] authenticate()
+activate AuthMiddleware
+AuthMiddleware -> AuthMiddleware: [7] Extract token from header
+AuthMiddleware -> UserModel: [8] findById(payload.sub)
+activate UserModel
+UserModel -> MongoDB: [9] Query user by ID
+MongoDB --> UserModel: [10] User data
+UserModel --> AuthMiddleware: [11] User object
+AuthMiddleware -> AuthMiddleware: [12] Verify token & user
+AuthMiddleware --> ViolationRoutes: [13] req.user (Admin)
+deactivate AuthMiddleware
+
+ViolationRoutes -> AuthMiddleware: [14] authorize(roles.ADMIN)
+activate AuthMiddleware
+AuthMiddleware -> AuthMiddleware: [15] Check user.role === 'Admin'
+AuthMiddleware --> ViolationRoutes: [16] Authorized
+deactivate AuthMiddleware
+
+ViolationRoutes -> ViolationController: [17] getAllViolations(req, res)
+activate ViolationController
+
+ViolationController -> ViolationController: [18] Extract query params\n(page, limit, status, violationType, severity)
+
+ViolationController -> ViolationController: [19] Build query object\n{status, violationType, driverId, severity}
+
+ViolationController -> ViolationModel: [20] find(query)\n.populate('reporterId')\n.populate('driverId')\n.populate('orderId')\n.populate('adminId')
+activate ViolationModel
+
+ViolationModel -> DriverModel: [21] Populate driverId\n.select('userId rating totalTrips status')
+activate DriverModel
+DriverModel -> UserModel: [22] Populate userId\n.select('name email phone avatarUrl')
+activate UserModel
+UserModel --> DriverModel: [23] User data
+deactivate UserModel
+DriverModel --> ViolationModel: [24] Driver with User data
+deactivate DriverModel
+
+ViolationModel -> MongoDB: [25] Aggregate query with\npopulate and pagination
+MongoDB --> ViolationModel: [26] Violation documents
+
+ViolationModel -> ViolationModel: [27] .sort({ createdAt: -1 })\n.skip(skip)\n.limit(limit)
+
+ViolationModel -> MongoDB: [28] Execute query
+MongoDB --> ViolationModel: [29] Array of Violation objects
+
+ViolationModel -> ViolationModel: [30] countDocuments(query)
+ViolationModel -> MongoDB: [31] Count total documents
+MongoDB --> ViolationModel: [32] Total count
+
+ViolationModel --> ViolationController: [33] [violations, total]
+deactivate ViolationModel
+
+ViolationController -> ViolationController: [34] Format response\n{success, data, meta}
+
+ViolationController --> ViolationRoutes: [35] JSON response\n{success: true, data: [...], meta: {...}}
+deactivate ViolationController
+
+ViolationRoutes --> AxiosClient: [36] HTTP 200 OK\nJSON response
+deactivate ViolationRoutes
+
+AxiosClient --> ViolationService: [37] Response object
+deactivate AxiosClient
+
+ViolationService --> ReportsPage: [38] response.data
+deactivate ViolationService
+
+ReportsPage -> ReportsPage: [39] setViolations(data)\nsetPagination(meta)\ncalculateStats(data)
+
+ReportsPage -> ReportsPage: [40] Render table with violations\nShow statistics cards\nDisplay filters
+
+ReportsPage --> Admin: [41] Display Reports Page\n(with data and filters)
+deactivate ReportsPage
+
+' ============================================
+' SCENARIO 2: ADMIN FILTERS REPORTS
+' ============================================
+
+== Scenario 2: Admin Filters Reports ==
+
+Admin -> ReportsPage: [1] Select filter\n(status = "Pending")
+activate ReportsPage
+
+ReportsPage -> ReportsPage: [2] setFilters({...filters, status: "Pending"})
+
+ReportsPage -> ReportsPage: [3] useEffect triggers\nfetchViolations()
+
+ReportsPage -> ViolationService: [4] getAllViolations(params)\n{page: 1, limit: 10, status: "Pending"}
+activate ViolationService
+
+ViolationService -> AxiosClient: [5] GET /api/violations/admin/all?status=Pending
+activate AxiosClient
+AxiosClient -> ViolationRoutes: [6] HTTP GET
+activate ViolationRoutes
+ViolationRoutes -> AuthMiddleware: [7] authenticate() & authorize()
+activate AuthMiddleware
+AuthMiddleware --> ViolationRoutes: [8] Authorized
+deactivate AuthMiddleware
+ViolationRoutes -> ViolationController: [9] getAllViolations(req, res)
+activate ViolationController
+
+ViolationController -> ViolationController: [10] Build query\n{status: "Pending"}
+
+ViolationController -> ViolationModel: [11] find({status: "Pending"})\n.populate(...)\n.sort(...)\n.skip(...)\n.limit(...)
+activate ViolationModel
+ViolationModel -> MongoDB: [12] Query filtered violations
+MongoDB --> ViolationModel: [13] Filtered violations
+ViolationModel --> ViolationController: [14] Filtered data
+deactivate ViolationModel
+
+ViolationController --> ViolationRoutes: [15] JSON response\n(filtered data)
+deactivate ViolationController
+ViolationRoutes --> AxiosClient: [16] HTTP 200 OK
+deactivate ViolationRoutes
+AxiosClient --> ViolationService: [17] Response
+deactivate AxiosClient
+ViolationService --> ReportsPage: [18] Filtered violations
+deactivate ViolationService
+
+ReportsPage -> ReportsPage: [19] Update state\nRe-render table
+ReportsPage --> Admin: [20] Display filtered results
+deactivate ReportsPage
+
+' ============================================
+' SCENARIO 3: ADMIN VIEWS REPORT DETAIL
+' ============================================
+
+== Scenario 3: Admin Views Report Detail ==
+
+Admin -> ReportsPage: [1] Click "Xem" button\non violation row
+activate ReportsPage
+
+ReportsPage -> ReportsPage: [2] handleViewDetail(violation)
+
+ReportsPage -> ReportsPage: [3] setSelectedViolation(violation)\nsetDetailModalVisible(true)
+
+ReportsPage -> ReportsPage: [4] Render Detail Modal\nwith violation data\n(populated from list)
+
+ReportsPage --> Admin: [5] Display Detail Modal\n(Reporter, Driver, Order, Violation info, Photos)
+deactivate ReportsPage
+
+' ============================================
+' SCENARIO 4: CUSTOMER VIEWS OWN REPORTS
+' ============================================
+
+== Scenario 4: Customer Views Own Reports ==
+
+actor Customer as "Customer"
+participant Reports as "Reports\n(User)"
+participant ViolationService as "ViolationService"
+participant AxiosClient as "AxiosClient"
+participant ViolationRoutes as "ViolationRoutes"
+participant AuthMiddleware as "AuthMiddleware"
+participant ViolationController as "ViolationController"
+participant ViolationModel as "Violation\nModel"
+database MongoDB as "MongoDB"
+
+Customer -> Reports: [1] Navigate to My Reports
+activate Reports
+
+Reports -> Reports: [2] Initialize state\n(reports, loading, filters)
+
+Reports -> ViolationService: [3] getMyReports(params)\n{page: 1, limit: 10, status: null}
+activate ViolationService
+
+ViolationService -> AxiosClient: [4] GET /api/violations/my-reports?page=1&limit=10
+activate AxiosClient
+
+AxiosClient -> ViolationRoutes: [5] HTTP GET /api/violations/my-reports
+activate ViolationRoutes
+
+ViolationRoutes -> AuthMiddleware: [6] authenticate()
+activate AuthMiddleware
+AuthMiddleware -> AuthMiddleware: [7] Verify token
+AuthMiddleware --> ViolationRoutes: [8] req.user (Customer)
+deactivate AuthMiddleware
+
+ViolationRoutes -> AuthMiddleware: [9] authorize(roles.CUSTOMER)
+activate AuthMiddleware
+AuthMiddleware -> AuthMiddleware: [10] Check user.role === 'Customer'
+AuthMiddleware --> ViolationRoutes: [11] Authorized
+deactivate AuthMiddleware
+
+ViolationRoutes -> ViolationController: [12] getCustomerReports(req, res)
+activate ViolationController
+
+ViolationController -> ViolationController: [13] Extract query params\n(page, limit, status)
+
+ViolationController -> ViolationController: [14] Build query\n{reporterId: req.user._id, status?}
+
+ViolationController -> ViolationModel: [15] find(query)\n.populate('driverId')\n.populate('orderId')\n.populate('adminId')
+activate ViolationModel
+
+ViolationModel -> MongoDB: [16] Query violations\nwhere reporterId = currentUser._id
+MongoDB --> ViolationModel: [17] Customer's violations
+
+ViolationModel -> ViolationModel: [18] .sort({ createdAt: -1 })\n.skip(skip)\n.limit(limit)
+
+ViolationModel -> MongoDB: [19] Execute paginated query
+MongoDB --> ViolationModel: [20] Paginated violations
+
+ViolationModel -> ViolationModel: [21] countDocuments(query)
+ViolationModel -> MongoDB: [22] Count total
+MongoDB --> ViolationModel: [23] Total count
+
+ViolationModel --> ViolationController: [24] [violations, total]
+deactivate ViolationModel
+
+ViolationController -> ViolationController: [25] Format response\n{success, data, meta}
+
+ViolationController --> ViolationRoutes: [26] JSON response\n{success: true, data: [...], meta: {...}}
+deactivate ViolationController
+
+ViolationRoutes --> AxiosClient: [27] HTTP 200 OK
+deactivate ViolationRoutes
+
+AxiosClient --> ViolationService: [28] Response object
+deactivate AxiosClient
+
+ViolationService --> Reports: [29] response.data
+deactivate ViolationService
+
+Reports -> Reports: [30] setReports(data)\nUpdate loading state
+
+Reports -> Reports: [31] Render reports list\nShow status badges\nDisplay filter options
+
+Reports --> Customer: [32] Display My Reports Page
+deactivate Reports
+
+' ============================================
+' SCENARIO 5: ADMIN UPDATES REPORT STATUS
+' ============================================
+
+== Scenario 5: Admin Updates Report Status ==
+
+actor Admin as "Admin"
+participant ReportsPage as "ReportsPage\n(Admin)"
+participant ViolationService as "ViolationService"
+participant AxiosClient as "AxiosClient"
+participant ViolationRoutes as "ViolationRoutes"
+participant AuthMiddleware as "AuthMiddleware"
+participant ViolationController as "ViolationController"
+participant ViolationModel as "Violation\nModel"
+participant DriverModel as "Driver\nModel"
+participant EmailService as "EmailService"
+database MongoDB as "MongoDB"
+
+Admin -> ReportsPage: [1] Click "Xử lý" button
+activate ReportsPage
+
+ReportsPage -> ReportsPage: [2] handleOpenUpdate(violation)
+
+ReportsPage -> ReportsPage: [3] form.setFieldsValue({...})\nsetUpdateModalVisible(true)
+
+ReportsPage --> Admin: [4] Display Update Modal\n(with current values)
+
+Admin -> ReportsPage: [5] Fill form\n(status, penalty, warningCount, banDriver, adminNotes)
+Admin -> ReportsPage: [6] Click "Cập nhật"
+
+ReportsPage -> ReportsPage: [7] handleUpdateStatus()
+
+ReportsPage -> ReportsPage: [8] form.validateFields()
+
+ReportsPage -> ViolationService: [9] updateViolationStatus(violationId, values)
+activate ViolationService
+
+ViolationService -> AxiosClient: [10] PUT /api/violations/admin/:violationId/status\n+ payload
+activate AxiosClient
+
+AxiosClient -> ViolationRoutes: [11] HTTP PUT
+activate ViolationRoutes
+
+ViolationRoutes -> AuthMiddleware: [12] authenticate() & authorize(ADMIN)
+activate AuthMiddleware
+AuthMiddleware --> ViolationRoutes: [13] Authorized
+deactivate AuthMiddleware
+
+ViolationRoutes -> ViolationController: [14] updateViolationStatus(req, res)
+activate ViolationController
+
+ViolationController -> ViolationController: [15] Extract violationId\nExtract update data\n(status, adminNotes, penalty, warningCount, banDriver, banDuration)
+
+ViolationController -> ViolationController: [16] Validate status
+
+ViolationController -> ViolationModel: [17] findByIdAndUpdate(violationId, updateData)
+activate ViolationModel
+
+ViolationModel -> MongoDB: [18] Update violation document
+MongoDB --> ViolationModel: [19] Updated violation
+
+ViolationModel -> ViolationModel: [20] populate('driverId', 'reporterId')
+ViolationModel -> MongoDB: [21] Populate related data
+MongoDB --> ViolationModel: [22] Violation with populated data
+
+ViolationModel --> ViolationController: [23] Updated violation
+deactivate ViolationModel
+
+alt If penalty > 0
+    ViolationController -> DriverModel: [24a] findByIdAndUpdate(driverId, {$inc: {incomeBalance: -penalty}})
+    activate DriverModel
+    DriverModel -> MongoDB: [25a] Deduct penalty from driver balance
+    MongoDB --> DriverModel: [26a] Updated driver
+    DriverModel --> ViolationController: [27a] Success
+    deactivate DriverModel
+end
+
+alt If banDriver === true
+    ViolationController -> DriverModel: [24b] findById(driverId)
+    activate DriverModel
+    DriverModel -> MongoDB: [25b] Find driver
+    MongoDB --> DriverModel: [26b] Driver object
+    DriverModel --> ViolationController: [27b] Driver
+    deactivate DriverModel
+    
+    ViolationController -> DriverModel: [28b] Update status = 'Blocked'\nUpdate isOnline = false
+    activate DriverModel
+    DriverModel -> MongoDB: [29b] Update driver status
+    MongoDB --> DriverModel: [30b] Updated driver
+    DriverModel --> ViolationController: [31b] Success
+    deactivate DriverModel
+    
+    ViolationController -> EmailService: [32b] sendDriverBannedEmail(...)
+    activate EmailService
+    EmailService -> EmailService: [33b] Send email to driver
+    EmailService --> ViolationController: [34b] Email sent
+    deactivate EmailService
+end
+
+alt If status === 'Resolved'
+    ViolationController -> EmailService: [24c] sendReportResolvedEmail(...)
+    activate EmailService
+    EmailService -> EmailService: [25c] Send email to reporter
+    EmailService --> ViolationController: [26c] Email sent
+    deactivate EmailService
+end
+
+ViolationController --> ViolationRoutes: [35] JSON response\n{success: true, data: violation, message: "..."}
+deactivate ViolationController
+
+ViolationRoutes --> AxiosClient: [36] HTTP 200 OK
+deactivate ViolationRoutes
+
+AxiosClient --> ViolationService: [37] Response
+deactivate AxiosClient
+
+ViolationService --> ReportsPage: [38] response.data
+deactivate ViolationService
+
+ReportsPage -> ReportsPage: [39] message.success("Cập nhật thành công")\nsetUpdateModalVisible(false)\nfetchViolations() (refresh list)
+
+ReportsPage --> Admin: [40] Updated report list\n(with new status)
+deactivate ReportsPage
+
+legend right
+  |<#LightBlue>Admin Flow|
+  Admin can view all reports,
+  filter, view details, and
+  update report status.
+
+  |<#LightGreen>Customer Flow|
+  Customer can only view
+  their own reports and
+  track status.
+
+  |<#LightYellow>Key Operations|
+  - Authentication required
+  - Role-based authorization
+  - Database queries with populate
+  - Pagination support
+  - Email notifications
+endlegend
+
+@enduml
+

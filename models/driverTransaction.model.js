@@ -8,7 +8,7 @@ const driverTransactionSchema = new mongoose.Schema({
    amount: { type: Number, required: true }, // Số tiền giao dịch (VND)
    fee: { type: Number, required: true }, // Phí hoa hồng (VND)
    netAmount: { type: Number, required: true }, // Số tiền thực nhận = amount - fee
-   type: { type: String, enum: ['OrderEarning', 'Withdrawal', 'Bonus', 'Penalty'], required: true }, // 'OrderEarning' là thu nhập từ đơn hàng, 'Withdrawal' là rút tiền, 'Bonus' là thưởng, 'Penalty' là phạt
+   type: { type: String, enum: ['OrderEarning', 'Withdrawal', 'Bonus', 'Penalty'], required: true },
    status: { type: String, enum: ['Pending', 'Completed', 'Failed', 'Cancelled'], default: 'Completed' },
    description: { type: String },
    paymentMethod: { type: String },

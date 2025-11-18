@@ -1,0 +1,282 @@
+@startuml Delete Feedback - Class Diagram
+
+!theme plain
+skinparam classAttributeIconSize 0
+
+' ============================================
+' FRONTEND LAYER
+' ============================================
+
+package "Frontend (React)" {
+    class FeedbackAdminPage {
+        - loading: boolean
+        - feedbacks: array
+        - selectedFeedback: object
+        - deleteModalVisible: boolean
+        - pagination: object
+        - filters: object
+        --
+        + fetchFeedbacks()
+        + handleDeleteClick(feedback)
+        + handleConfirmDelete()
+        + handleCancelDelete()
+        + render()
+    }
+
+    class FeedbackService {
+        + getAllFeedbacks(params): Promise
+        + deleteFeedback(feedbackId): Promise
+        + updateFeedbackStatus(feedbackId, payload): Promise
+    }
+
+    class AxiosClient {
+        - baseURL: string
+        - headers: object
+        --
+        + interceptors.request
+        + interceptors.response
+        + get(url, config): Promise
+        + delete(url, config): Promise
+    }
+
+    class FeedbackEndpoints {
+        {static} + adminAllFeedbacks: string
+        {static} + adminDeleteFeedback(feedbackId): string
+        {static} + adminUpdateStatus(feedbackId): string
+    }
+}
+
+' ============================================
+' BACKEND LAYER - ROUTING
+' ============================================
+
+package "Backend - Routes" {
+    class FeedbackRoutes {
+        + router: Express.Router
+        --
+        + GET /api/feedback/admin/all
+        + DELETE /api/feedback/admin/:feedbackId
+        + PUT /api/feedback/admin/:feedbackId/status
+    }
+}
+
+' ============================================
+' BACKEND LAYER - MIDDLEWARE
+' ============================================
+
+package "Backend - Middleware" {
+    class AuthMiddleware {
+        {static} + authenticate(req, res, next)
+        {static} + authorize(...roles)
+    }
+
+    class Roles {
+        {static} + ADMIN: string
+        {static} + CUSTOMER: string
+        {static} + DRIVER: string
+    }
+}
+
+' ============================================
+' BACKEND LAYER - CONTROLLER
+' ============================================
+
+package "Backend - Controllers" {
+    class FeedbackController {
+        {static} + getAllFeedbacks(req, res)
+        {static} + deleteFeedback(req, res)
+        {static} + updateFeedbackStatus(req, res)
+    }
+}
+
+' ============================================
+' BACKEND LAYER - MODELS
+' ============================================
+
+package "Backend - Models" {
+    class Feedback {
+        - _id: ObjectId
+        - orderId: ObjectId
+        - orderItemId: ObjectId
+        - customerId: ObjectId
+        - driverId: ObjectId
+        - overallRating: Number
+        - serviceRating: Number
+        - driverRating: Number
+        - vehicleRating: Number
+        - punctualityRating: Number
+        - comment: String
+        - photos: String[]
+        - status: String
+        - adminResponse: String
+        - driverResponse: String
+        - isAnonymous: Boolean
+        - helpfulCount: Number
+        - createdAt: Date
+        - updatedAt: Date
+        --
+        + findById(id): Query
+        + findByIdAndDelete(id): Query
+        + find(query): Query
+        + populate(field): Query
+        + aggregate(pipeline): Promise
+    }
+
+    class Driver {
+        - _id: ObjectId
+        - userId: ObjectId
+        - rating: Number
+        - totalFeedbacks: Number
+        --
+        + findById(id): Query
+        + findByIdAndUpdate(id, update): Query
+        + aggregate(pipeline): Promise
+    }
+
+    class Order {
+        - _id: ObjectId
+        - customerId: ObjectId
+        - status: String
+        --
+        + findById(id): Query
+    }
+
+    class User {
+        - _id: ObjectId
+        - name: String
+        - email: String
+        - role: String
+    }
+}
+
+' ============================================
+' UTILITY LAYER
+' ============================================
+
+package "Backend - Utils" {
+    class DriverRatingHelper {
+        {static} + updateDriverRating(driverId)
+    }
+}
+
+' ============================================
+' DATA TRANSFER OBJECTS
+' ============================================
+
+package "DTOs" {
+    class DeleteFeedbackRequestDTO {
+        + feedbackId: string
+        + reason: string (optional)
+    }
+
+    class DeleteFeedbackResponseDTO {
+        + success: boolean
+        + message: string
+        + data: object (deleted feedback info)
+    }
+
+    class FeedbackDTO {
+        + _id: ObjectId
+        + orderId: OrderDTO
+        + customerId: UserDTO
+        + driverId: DriverDTO
+        + overallRating: number
+        + comment: string
+        + status: string
+        + createdAt: Date
+    }
+
+    class ErrorResponseDTO {
+        + success: boolean
+        + message: string
+        + error: string
+    }
+}
+
+' ============================================
+' RELATIONSHIPS
+' ============================================
+
+' Frontend relationships
+FeedbackAdminPage ..> FeedbackService : uses
+FeedbackService ..> AxiosClient : uses
+FeedbackService ..> FeedbackEndpoints : uses
+AxiosClient ..> FeedbackRoutes : HTTP DELETE
+
+' Backend routing relationships
+FeedbackRoutes ..> AuthMiddleware : uses
+FeedbackRoutes ..> FeedbackController : calls
+AuthMiddleware ..> Roles : uses
+
+' Controller relationships
+FeedbackController ..> Feedback : queries/deletes
+FeedbackController ..> Driver : updates
+FeedbackController ..> DriverRatingHelper : uses
+FeedbackController ..> Order : queries
+FeedbackController ..> User : queries
+
+' Data flow
+FeedbackController ..> DeleteFeedbackResponseDTO : returns
+FeedbackController ..> ErrorResponseDTO : returns (on error)
+Feedback ..> FeedbackDTO : maps to
+
+' Model relationships
+Feedback --> Order : references (orderId)
+Feedback --> User : references (customerId)
+Feedback --> Driver : references (driverId)
+Driver --> User : references (userId)
+Order --> User : references (customerId)
+
+' Note relationships
+note right of FeedbackAdminPage
+  Admin Component
+  - View all feedbacks
+  - Click delete button on feedback row
+  - Confirm deletion in modal
+  - Refresh list after deletion
+  - Show success/error messages
+end note
+
+note right of FeedbackController::deleteFeedback
+  Delete Feedback Logic:
+  1. Authenticate admin user
+  2. Find feedback by ID
+  3. Get driverId from feedback
+  4. Delete feedback from database
+  5. Recalculate driver rating
+  6. Update driver's totalFeedbacks count
+  7. Return success response
+end note
+
+note right of Feedback
+  Status values:
+  - Pending (Chờ duyệt)
+  - Approved (Đã duyệt)
+  - Rejected (Từ chối)
+  
+  Admin can delete feedback:
+  - Inappropriate content
+  - Spam feedback
+  - Resolved issues
+  - Violation of terms
+end note
+
+note right of DriverRatingHelper::updateDriverRating
+  After deleting feedback:
+  - Recalculate average rating
+    from remaining approved feedbacks
+  - Update driver.rating
+  - Update driver.totalFeedbacks
+  - Maintain data consistency
+end note
+
+@enduml
+
+
+
+
+
+
+
+
+

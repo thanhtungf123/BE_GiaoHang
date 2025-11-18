@@ -1,0 +1,329 @@
+@startuml ERD_GiaoHang_System
+
+!define PK_COLOR #FFD700
+!define FK_COLOR #87CEEB
+
+entity "User" as User {
+  * _id : ObjectId <<PK>>
+  --
+  * name : String
+  * email : String <<UK>>
+  * phone : String <<UK>>
+  * passwordHash : String
+  * role : String (Customer|Driver|Admin)
+  roles : Array
+  address : String
+  isEmailVerified : Boolean
+  avatarUrl : String
+  createdAt : Date
+  updatedAt : Date
+}
+
+entity "Driver" as Driver {
+  * _id : ObjectId <<PK>>
+  --
+  * userId : ObjectId <<FK>>
+  vehicleId : ObjectId <<FK>>
+  * status : String (Pending|Active|Rejected|Blocked)
+  rating : Number
+  totalTrips : Number
+  incomeBalance : Number
+  isOnline : Boolean
+  lastOnlineAt : Date
+  avatarUrl : String
+  serviceAreas : Array
+  currentLocation : GeoJSON Point
+  locationUpdatedAt : Date
+  bankAccountName : String
+  bankAccountNumber : String
+  bankName : String
+  bankCode : String
+  createdAt : Date
+  updatedAt : Date
+}
+
+entity "Vehicle" as Vehicle {
+  * _id : ObjectId <<PK>>
+  --
+  * driverId : ObjectId <<FK>>
+  * type : String (TruckSmall|TruckMedium|...)
+  * licensePlate : String
+  maxWeightKg : Number
+  pricePerKm : Number
+  vehicleDocs : Array
+  photoUrl : String
+  status : String (Active|Maintenance|Inactive)
+  description : String
+  features : Array
+  createdAt : Date
+  updatedAt : Date
+}
+
+entity "Order" as Order {
+  * _id : ObjectId <<PK>>
+  --
+  * customerId : ObjectId <<FK>>
+  * pickupAddress : String
+  pickupLocation : GeoJSON Point
+  * dropoffAddress : String
+  dropoffLocation : GeoJSON Point
+  * items : Array<OrderItem>
+  totalPrice : Number
+  paymentId : ObjectId <<FK>>
+  paymentStatus : String (Pending|Paid|Failed)
+  paymentMethod : String (Cash|Banking|Wallet)
+  * paymentBy : String (sender|receiver)
+  customerNote : String
+  * status : String (Created|InProgress|Completed|Cancelled)
+  createdAt : Date
+  updatedAt : Date
+}
+
+entity "OrderItem" as OrderItem {
+  * _id : ObjectId <<PK>>
+  --
+  vehicleType : String
+  * weightKg : Number
+  * distanceKm : Number
+  loadingService : Boolean
+  insurance : Boolean
+  priceBreakdown : Object
+  * status : String (Created|Accepted|PickedUp|Delivering|Delivered|Cancelled)
+  driverId : ObjectId <<FK>>
+  acceptedAt : Date
+  pickedUpAt : Date
+  deliveredAt : Date
+  cancelledAt : Date
+  cancelReason : String
+  itemPhotos : Array
+  offeredToDrivers : Array
+  createdAt : Date
+  updatedAt : Date
+}
+
+entity "Payment" as Payment {
+  * _id : ObjectId <<PK>>
+  --
+  * orderId : ObjectId <<FK>>
+  orderItemId : ObjectId
+  * method : String (MoMo|VNPay|ZaloPay|COD)
+  amount : Number
+  status : String (Pending|Paid|Failed|Refunded)
+  transactionCode : String
+  createdAt : Date
+  updatedAt : Date
+}
+
+entity "Feedback" as Feedback {
+  * _id : ObjectId <<PK>>
+  --
+  * orderId : ObjectId <<FK>>
+  orderItemId : ObjectId
+  * customerId : ObjectId <<FK>>
+  * driverId : ObjectId <<FK>>
+  * overallRating : Number (1-5)
+  serviceRating : Number (1-5)
+  driverRating : Number (1-5)
+  vehicleRating : Number (1-5)
+  punctualityRating : Number (1-5)
+  comment : String
+  photos : Array
+  status : String (Pending|Approved|Rejected)
+  adminResponse : String
+  driverResponse : String
+  isAnonymous : Boolean
+  helpfulCount : Number
+  createdAt : Date
+  updatedAt : Date
+}
+
+entity "Violation" as Violation {
+  * _id : ObjectId <<PK>>
+  --
+  * reporterId : ObjectId <<FK>>
+  * driverId : ObjectId <<FK>>
+  orderId : ObjectId <<FK>>
+  orderItemId : ObjectId
+  * violationType : String (LatePickup|LateDelivery|...)
+  * description : String
+  photos : Array
+  status : String (Pending|Investigating|Resolved|Dismissed)
+  adminId : ObjectId <<FK>>
+  adminNotes : String
+  penalty : Number
+  warningCount : Number
+  resolvedAt : Date
+  severity : String (Low|Medium|High|Critical)
+  isAnonymous : Boolean
+  createdAt : Date
+  updatedAt : Date
+}
+
+entity "ChatMessage" as ChatMessage {
+  * _id : ObjectId <<PK>>
+  --
+  * orderId : ObjectId <<FK>>
+  * orderItemId : ObjectId
+  * driverId : ObjectId <<FK>>
+  * customerId : ObjectId <<FK>>
+  * senderId : ObjectId <<FK>>
+  * senderRole : String (Customer|Driver|System)
+  * message : String
+  isSystem : Boolean
+  readByCustomerAt : Date
+  readByDriverAt : Date
+  createdAt : Date
+  updatedAt : Date
+}
+
+entity "DriverApplication" as DriverApplication {
+  * _id : ObjectId <<PK>>
+  --
+  * userId : ObjectId <<FK>>
+  status : String (Pending|Approved|Rejected)
+  adminNote : String
+  emailVerifiedAt : Date
+  docs : Object
+  reviewedAt : Date
+  submittedAt : Date
+  createdAt : Date
+  updatedAt : Date
+}
+
+entity "DriverTransaction" as DriverTransaction {
+  * _id : ObjectId <<PK>>
+  --
+  * driverId : ObjectId <<FK>>
+  orderId : ObjectId <<FK>>
+  orderItemId : ObjectId
+  * amount : Number
+  * fee : Number
+  * netAmount : Number
+  * type : String (OrderEarning|Withdrawal|Bonus|Penalty)
+  status : String (Pending|Completed|Failed|Cancelled)
+  description : String
+  paymentMethod : String
+  transactionDate : Date
+  createdAt : Date
+  updatedAt : Date
+}
+
+entity "WithdrawalRequest" as WithdrawalRequest {
+  * _id : ObjectId <<PK>>
+  --
+  * driverId : ObjectId <<FK>>
+  * userId : ObjectId <<FK>>
+  * requestedAmount : Number
+  actualAmount : Number
+  systemFee : Number
+  status : String (Pending|Approved|Rejected|Completed|Cancelled)
+  * bankAccountName : String
+  * bankAccountNumber : String
+  * bankName : String
+  bankCode : String
+  * confirmedAccountNumber : String
+  driverNote : String
+  rejectionReason : String
+  processedBy : ObjectId <<FK>>
+  approvedAt : Date
+  rejectedAt : Date
+  completedAt : Date
+  transactionId : ObjectId <<FK>>
+  createdAt : Date
+  updatedAt : Date
+}
+
+entity "Insurance" as Insurance {
+  * _id : ObjectId <<PK>>
+  --
+  * orderId : ObjectId <<FK>>
+  provider : String
+  amount : Number
+  status : String (Active|Claiming|Closed)
+  createdAt : Date
+  updatedAt : Date
+}
+
+entity "Otp" as Otp {
+  * _id : ObjectId <<PK>>
+  --
+  * userId : ObjectId <<FK>>
+  * code : String
+  * purpose : String (verify_email|reset_password)
+  * expiresAt : Date
+  used : Boolean
+  createdAt : Date
+  updatedAt : Date
+}
+
+entity "Voucher" as Voucher {
+  * _id : ObjectId <<PK>>
+  --
+  code : String <<UK>>
+  discountPercent : Number
+  discountAmount : Number
+  expiryDate : Date
+  status : String (Active|Expired|Used)
+  createdAt : Date
+  updatedAt : Date
+}
+
+' Relationships
+User ||--o{ Driver : "có thể là (1-1)"
+User ||--o{ Order : "tạo (1-N)"
+User ||--o{ Feedback : "đánh giá (1-N)"
+User ||--o{ Violation : "báo cáo/xử lý (1-N)"
+User ||--o{ ChatMessage : "gửi (1-N)"
+User ||--o{ DriverApplication : "đăng ký (1-N)"
+User ||--o{ WithdrawalRequest : "yêu cầu/xử lý (1-N)"
+User ||--o{ Otp : "có (1-N)"
+
+Driver ||--o{ Vehicle : "sở hữu (1-N)"
+Driver ||--o{ OrderItem : "nhận (1-N)"
+Driver ||--o{ Feedback : "nhận (1-N)"
+Driver ||--o{ Violation : "bị báo cáo (1-N)"
+Driver ||--o{ ChatMessage : "chat (1-N)"
+Driver ||--o{ DriverTransaction : "có (1-N)"
+Driver ||--o{ WithdrawalRequest : "yêu cầu (1-N)"
+
+Order ||--o{ OrderItem : "chứa (1-N embedded)"
+Order ||--|| Payment : "có (1-1)"
+Order ||--o{ Feedback : "được đánh giá (1-N)"
+Order ||--o{ Violation : "liên quan (1-N)"
+Order ||--o{ ChatMessage : "có chat (1-N)"
+Order ||--o{ Insurance : "có bảo hiểm (1-N)"
+Order ||--o{ DriverTransaction : "tạo giao dịch (1-N)"
+
+OrderItem }o--|| Driver : "được nhận bởi (N-1)"
+
+Payment }o--|| Order : "thanh toán cho (N-1)"
+
+Feedback }o--|| Order : "đánh giá (N-1)"
+Feedback }o--|| Driver : "đánh giá (N-1)"
+Feedback }o--|| User : "từ (N-1)"
+
+Violation }o--|| Driver : "báo cáo (N-1)"
+Violation }o--o| Order : "liên quan (N-1)"
+Violation }o--|| User : "người báo cáo (N-1)"
+Violation }o--o| User : "xử lý admin (N-1)"
+
+ChatMessage }o--|| Order : "thuộc (N-1)"
+ChatMessage }o--|| Driver : "với (N-1)"
+ChatMessage }o--|| User : "từ/đến (N-1)"
+
+DriverApplication }o--|| User : "của (N-1)"
+
+DriverTransaction }o--|| Driver : "của (N-1)"
+DriverTransaction }o--o| Order : "từ đơn (N-1)"
+
+WithdrawalRequest }o--|| Driver : "của (N-1)"
+WithdrawalRequest }o--|| User : "của (N-1)"
+WithdrawalRequest }o--o| DriverTransaction : "tạo (N-1)"
+WithdrawalRequest }o--o| User : "xử lý admin (N-1)"
+
+Insurance }o--|| Order : "bảo hiểm (N-1)"
+
+Otp }o--|| User : "của (N-1)"
+
+@enduml
+

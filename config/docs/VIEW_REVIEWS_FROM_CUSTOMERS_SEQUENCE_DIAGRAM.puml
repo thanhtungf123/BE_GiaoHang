@@ -1,0 +1,350 @@
+    @startuml View Reviews from Customers - Sequence Diagram
+
+    !theme plain
+    skinparam sequenceMessageAlign center
+    skinparam maxMessageSize 60
+
+    title View Reviews from Customers - Sequence Diagram
+
+    ' ============================================
+    ' SCENARIO 1: DRIVER VIEWS REVIEWS FROM CUSTOMERS
+    ' ============================================
+
+    == Scenario 1: Driver Views Reviews from Customers ==
+
+    actor Driver as "Driver"
+    participant DriverReviewsPage as "DriverReviewsPage"
+    participant FeedbackService as "FeedbackService"
+    participant AxiosClient as "AxiosClient"
+    participant FeedbackRoutes as "FeedbackRoutes"
+    participant FeedbackController as "FeedbackController"
+    participant FeedbackModel as "Feedback\nModel"
+    database MongoDB as "MongoDB"
+
+    Driver -> DriverReviewsPage: [1] Navigate to Reviews Page
+    activate DriverReviewsPage
+
+    DriverReviewsPage -> DriverReviewsPage: [2] Initialize state\n(loading, feedbacks, stats, pagination, filters)
+
+    DriverReviewsPage -> FeedbackService: [3] getDriverFeedbacks(driverId, params)\n{page: 1, limit: 10, rating: null}
+    activate FeedbackService
+
+    FeedbackService -> AxiosClient: [4] GET /api/feedback/driver/:driverId\n+ query params (page, limit, rating)
+    activate AxiosClient
+
+    AxiosClient -> FeedbackRoutes: [5] HTTP GET /api/feedback/driver/:driverId?page=1&limit=10
+    activate FeedbackRoutes
+
+    note right of FeedbackRoutes
+    Public endpoint
+    No authentication required
+    end note
+
+    FeedbackRoutes -> FeedbackController: [6] getDriverFeedbacks(req, res)
+    activate FeedbackController
+
+    FeedbackController -> FeedbackController: [7] Extract params\n(driverId, page, limit, rating)
+
+    FeedbackController -> FeedbackController: [8] Build query\n{driverId, status: 'Approved', rating?}
+
+    FeedbackController -> FeedbackModel: [9] find(query)\n.populate('customerId')\n.populate('orderId')
+    activate FeedbackModel
+
+    FeedbackModel -> MongoDB: [10] Query feedbacks\nwhere driverId = driverId\nand status = 'Approved'
+    MongoDB --> FeedbackModel: [11] Feedback documents
+
+    FeedbackModel -> FeedbackModel: [12] populate('customerId', 'name avatar')
+
+    FeedbackModel -> MongoDB: [13] Query customer data
+    MongoDB --> FeedbackModel: [14] Customer data populated
+
+    FeedbackModel -> FeedbackModel: [15] populate('orderId', 'pickupAddress dropoffAddress')
+
+    FeedbackModel -> MongoDB: [16] Query order data
+    MongoDB --> FeedbackModel: [17] Order data populated
+
+    FeedbackModel -> FeedbackModel: [18] .sort({ createdAt: -1 })\n.skip(skip)\n.limit(limit)
+
+    FeedbackModel -> MongoDB: [19] Execute paginated query
+    MongoDB --> FeedbackModel: [20] Paginated feedbacks
+
+    FeedbackModel -> FeedbackModel: [21] countDocuments(query)
+
+    FeedbackModel -> MongoDB: [22] Count total feedbacks
+    MongoDB --> FeedbackModel: [23] Total count
+
+    FeedbackModel --> FeedbackController: [24] [feedbacks, total]
+    deactivate FeedbackModel
+
+    FeedbackController -> FeedbackModel: [25] aggregate([\n  {$match: {driverId, status: 'Approved'}},\n  {$group: {\n    avgOverall: {$avg: '$overallRating'},\n    avgService: {$avg: '$serviceRating'},\n    avgDriver: {$avg: '$driverRating'},\n    avgVehicle: {$avg: '$vehicleRating'},\n    avgPunctuality: {$avg: '$punctualityRating'},\n    ratingCounts: {...}\n  }}\n])
+    activate FeedbackModel
+
+    FeedbackModel -> MongoDB: [26] Calculate statistics\n(average ratings, rating counts)
+    MongoDB --> FeedbackModel: [27] Statistics data
+
+    FeedbackModel --> FeedbackController: [28] Stats object
+    deactivate FeedbackModel
+
+    FeedbackController -> FeedbackController: [29] Process rating counts\n(1-5 stars distribution)
+
+    FeedbackController -> FeedbackController: [30] Format response\n{success, data, stats, meta}
+
+    FeedbackController --> FeedbackRoutes: [31] JSON response\n{success: true, data: [...], stats: {...}, meta: {...}}
+    deactivate FeedbackController
+
+    FeedbackRoutes --> AxiosClient: [32] HTTP 200 OK\nJSON response
+    deactivate FeedbackRoutes
+
+    AxiosClient --> FeedbackService: [33] Response object
+    deactivate AxiosClient
+
+    FeedbackService --> DriverReviewsPage: [34] response.data
+    deactivate FeedbackService
+
+    DriverReviewsPage -> DriverReviewsPage: [35] setFeedbacks(data)\nsetStats(stats)\nsetPagination(meta)
+
+    DriverReviewsPage -> FeedbackDisplay: [36] Render FeedbackDisplay\n(feedbacks, stats, showStats=true)
+    activate FeedbackDisplay
+
+    FeedbackDisplay -> FeedbackDisplay: [37] Display statistics cards\n(total, avgOverall, avgService, avgDriver)
+
+    FeedbackDisplay -> FeedbackDisplay: [38] Display rating distribution\n(1-5 stars with counts)
+
+    FeedbackDisplay -> FeedbackDisplay: [39] Render feedback cards\n(customer info, ratings, comment, photos, order info)
+
+    FeedbackDisplay --> DriverReviewsPage: [40] Rendered components
+    deactivate FeedbackDisplay
+
+    DriverReviewsPage --> Driver: [41] Display Reviews Page\n(with statistics and feedback list)
+    deactivate DriverReviewsPage
+
+    ' ============================================
+    ' SCENARIO 2: DRIVER FILTERS REVIEWS BY RATING
+    ' ============================================
+
+    == Scenario 2: Driver Filters Reviews by Rating ==
+
+    Driver -> DriverReviewsPage: [42] Select rating filter\n(rating = 5)
+    activate DriverReviewsPage
+
+    DriverReviewsPage -> DriverReviewsPage: [43] handleFilterChange('rating', 5)
+
+    DriverReviewsPage -> DriverReviewsPage: [44] setFilters({...filters, rating: 5, page: 1})
+
+    DriverReviewsPage -> DriverReviewsPage: [45] useEffect triggers\nfetchFeedbacks()
+
+    DriverReviewsPage -> FeedbackService: [46] getDriverFeedbacks(driverId, params)\n{page: 1, limit: 10, rating: 5}
+    activate FeedbackService
+
+    FeedbackService -> AxiosClient: [47] GET /api/feedback/driver/:driverId?rating=5
+    activate AxiosClient
+    AxiosClient -> FeedbackRoutes: [48] HTTP GET
+    activate FeedbackRoutes
+    FeedbackRoutes -> FeedbackController: [49] getDriverFeedbacks(req, res)
+    activate FeedbackController
+
+    FeedbackController -> FeedbackController: [50] Build query\n{driverId, status: 'Approved', overallRating: 5}
+
+    FeedbackController -> FeedbackModel: [51] find(query).populate(...)\n.sort(...).skip(...).limit(...)
+    activate FeedbackModel
+    FeedbackModel -> MongoDB: [52] Query filtered feedbacks\n(only 5-star ratings)
+    MongoDB --> FeedbackModel: [53] Filtered feedbacks
+    FeedbackModel --> FeedbackController: [54] Filtered data
+    deactivate FeedbackModel
+
+    FeedbackController -> FeedbackModel: [55] aggregate() (recalculate stats)
+    activate FeedbackModel
+    FeedbackModel -> MongoDB: [56] Calculate stats for filtered data
+    MongoDB --> FeedbackModel: [57] Updated statistics
+    FeedbackModel --> FeedbackController: [58] Updated stats
+    deactivate FeedbackModel
+
+    FeedbackController --> FeedbackRoutes: [59] JSON response\n(filtered data with stats)
+    deactivate FeedbackController
+    FeedbackRoutes --> AxiosClient: [60] HTTP 200 OK
+    deactivate FeedbackRoutes
+    AxiosClient --> FeedbackService: [61] Response
+    deactivate AxiosClient
+    FeedbackService --> DriverReviewsPage: [62] Filtered feedbacks
+    deactivate FeedbackService
+
+    DriverReviewsPage -> DriverReviewsPage: [63] Update state\nRe-render components
+    DriverReviewsPage --> Driver: [64] Display filtered results\n(only 5-star reviews)
+    deactivate DriverReviewsPage
+
+    ' ============================================
+    ' SCENARIO 3: ADMIN VIEWS ALL REVIEWS FROM CUSTOMERS
+    ' ============================================
+
+    == Scenario 3: Admin Views All Reviews from Customers ==
+
+    actor Admin as "Admin"
+    participant AdminReviewsPage as "AdminReviewsPage"
+    participant FeedbackService as "FeedbackService"
+    participant AxiosClient as "AxiosClient"
+    participant FeedbackRoutes as "FeedbackRoutes"
+    participant AuthMiddleware as "AuthMiddleware"
+    participant FeedbackController as "FeedbackController"
+    participant FeedbackModel as "Feedback\nModel"
+    participant DriverModel as "Driver\nModel"
+    participant UserModel as "User\nModel"
+    database MongoDB as "MongoDB"
+
+    Admin -> AdminReviewsPage: [65] Navigate to Reviews Management
+    activate AdminReviewsPage
+
+    AdminReviewsPage -> AdminReviewsPage: [66] Initialize state\n(loading, feedbacks, pagination, filters)
+
+    AdminReviewsPage -> FeedbackService: [67] getAllFeedbacks(params)\n{page: 1, limit: 10, status: null, rating: null, driverId: null}
+    activate FeedbackService
+
+    FeedbackService -> AxiosClient: [68] GET /api/feedback/admin/all\n+ Bearer token\n+ query params
+    activate AxiosClient
+
+    AxiosClient -> FeedbackRoutes: [69] HTTP GET /api/feedback/admin/all?page=1&limit=10
+    activate FeedbackRoutes
+
+    FeedbackRoutes -> AuthMiddleware: [70] authenticate()
+    activate AuthMiddleware
+    AuthMiddleware -> AuthMiddleware: [71] Extract token from header
+    AuthMiddleware -> AuthMiddleware: [72] Verify token & user
+    AuthMiddleware --> FeedbackRoutes: [73] req.user (Admin)
+    deactivate AuthMiddleware
+
+    FeedbackRoutes -> AuthMiddleware: [74] authorize(roles.ADMIN)
+    activate AuthMiddleware
+    AuthMiddleware -> AuthMiddleware: [75] Check user.role === 'Admin'
+    AuthMiddleware --> FeedbackRoutes: [76] Authorized
+    deactivate AuthMiddleware
+
+    FeedbackRoutes -> FeedbackController: [77] getAllFeedbacks(req, res)
+    activate FeedbackController
+
+    FeedbackController -> FeedbackController: [78] Extract query params\n(page, limit, status, rating, driverId)
+
+    FeedbackController -> FeedbackController: [79] Build query object\n{status?, rating?, driverId?}
+
+    FeedbackController -> FeedbackModel: [80] find(query)\n.populate('customerId')\n.populate('driverId')\n.populate('orderId')
+    activate FeedbackModel
+
+    FeedbackModel -> DriverModel: [81] Populate driverId\n.select('userId')
+    activate DriverModel
+    DriverModel -> UserModel: [82] Populate userId\n.select('name email phone avatarUrl')
+    activate UserModel
+    UserModel --> DriverModel: [83] User data
+    deactivate UserModel
+    DriverModel --> FeedbackModel: [84] Driver with User data
+    deactivate DriverModel
+
+    FeedbackModel -> MongoDB: [85] Query feedbacks with filters\nand populated data
+    MongoDB --> FeedbackModel: [86] Feedback documents with populated data
+
+    FeedbackModel -> FeedbackModel: [87] .sort({ createdAt: -1 })\n.skip(skip)\n.limit(limit)
+
+    FeedbackModel -> MongoDB: [88] Execute paginated query
+    MongoDB --> FeedbackModel: [89] Paginated feedbacks
+
+    FeedbackModel -> FeedbackModel: [90] countDocuments(query)
+    FeedbackModel -> MongoDB: [91] Count total
+    MongoDB --> FeedbackModel: [92] Total count
+
+    FeedbackModel --> FeedbackController: [93] [feedbacks, total]
+    deactivate FeedbackModel
+
+    FeedbackController -> FeedbackController: [94] Format response\n{success, data, meta}
+
+    FeedbackController --> FeedbackRoutes: [95] JSON response\n{success: true, data: [...], meta: {...}}
+    deactivate FeedbackController
+
+    FeedbackRoutes --> AxiosClient: [96] HTTP 200 OK\nJSON response
+    deactivate FeedbackRoutes
+
+    AxiosClient --> FeedbackService: [97] Response object
+    deactivate AxiosClient
+
+    FeedbackService --> AdminReviewsPage: [98] response.data
+    deactivate FeedbackService
+
+    AdminReviewsPage -> AdminReviewsPage: [99] setFeedbacks(data)\nsetPagination(meta)
+
+    AdminReviewsPage -> FeedbackDisplay: [100] Render FeedbackDisplay\n(feedbacks, showStats=false)
+    activate FeedbackDisplay
+
+    FeedbackDisplay -> FeedbackDisplay: [101] Render feedback cards\n(customer, driver, ratings, comment, status)
+
+    FeedbackDisplay --> AdminReviewsPage: [102] Rendered components
+    deactivate FeedbackDisplay
+
+    AdminReviewsPage --> Admin: [103] Display All Reviews Page\n(with filters and table)
+    deactivate AdminReviewsPage
+
+    ' ============================================
+    ' SCENARIO 4: ADMIN FILTERS REVIEWS
+    ' ============================================
+
+    == Scenario 4: Admin Filters Reviews ==
+
+    Admin -> AdminReviewsPage: [104] Select filters\n(status: "Approved", rating: 5)
+    activate AdminReviewsPage
+
+    AdminReviewsPage -> AdminReviewsPage: [105] setFilters({...filters, status: "Approved", rating: 5, page: 1})
+
+    AdminReviewsPage -> AdminReviewsPage: [106] useEffect triggers\nfetchFeedbacks()
+
+    AdminReviewsPage -> FeedbackService: [107] getAllFeedbacks(params)\n{page: 1, status: "Approved", rating: 5}
+    activate FeedbackService
+
+    FeedbackService -> AxiosClient: [108] GET /api/feedback/admin/all?status=Approved&rating=5
+    activate AxiosClient
+    AxiosClient -> FeedbackRoutes: [109] HTTP GET
+    activate FeedbackRoutes
+    FeedbackRoutes -> AuthMiddleware: [110] authenticate() & authorize(ADMIN)
+    activate AuthMiddleware
+    AuthMiddleware --> FeedbackRoutes: [111] Authorized
+    deactivate AuthMiddleware
+    FeedbackRoutes -> FeedbackController: [112] getAllFeedbacks(req, res)
+    activate FeedbackController
+
+    FeedbackController -> FeedbackController: [113] Build query\n{status: "Approved", overallRating: 5}
+
+    FeedbackController -> FeedbackModel: [114] find(query).populate(...)\n.sort(...).skip(...).limit(...)
+    activate FeedbackModel
+    FeedbackModel -> MongoDB: [115] Query filtered feedbacks
+    MongoDB --> FeedbackModel: [116] Filtered feedbacks
+    FeedbackModel --> FeedbackController: [117] Filtered data
+    deactivate FeedbackModel
+
+    FeedbackController --> FeedbackRoutes: [118] JSON response\n(filtered data)
+    deactivate FeedbackController
+    FeedbackRoutes --> AxiosClient: [119] HTTP 200 OK
+    deactivate FeedbackRoutes
+    AxiosClient --> FeedbackService: [120] Response
+    deactivate AxiosClient
+    FeedbackService --> AdminReviewsPage: [121] Filtered feedbacks
+    deactivate FeedbackService
+
+    AdminReviewsPage -> AdminReviewsPage: [122] Update state\nRe-render table
+    AdminReviewsPage --> Admin: [123] Display filtered results
+    deactivate AdminReviewsPage
+
+    legend right
+    |<#LightBlue>Driver Flow|
+    Driver views reviews from
+    customers about themselves.
+    Public endpoint, no auth.
+
+    |<#LightGreen>Admin Flow|
+    Admin views all reviews
+    from customers. Requires
+    authentication & authorization.
+
+    |<#LightYellow>Key Features|
+    - Statistics calculation
+    - Rating distribution
+    - Filter by rating/status
+    - Pagination support
+    - Populate relationships
+    endlegend
+
+    @enduml
+

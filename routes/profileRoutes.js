@@ -6,7 +6,9 @@ import {
    uploadAvatar,
    getDriverProfile,
    updateServiceAreas,
-   updateDriverBankInfo
+   updateDriverBankInfo,
+   updateDriverLocation,
+   changePassword
 } from '../controllers/profileController.js';
 
 const router = express.Router();
@@ -28,5 +30,11 @@ router.put('/driver/service-areas', authenticate, authorize(roles.DRIVER), updat
 
 // Cập nhật thông tin ngân hàng của tài xế
 router.put('/driver/bank', authenticate, authorize(roles.DRIVER), updateDriverBankInfo);
+
+// Cập nhật vị trí hiện tại của tài xế
+router.put('/driver/location', authenticate, authorize(roles.DRIVER), updateDriverLocation);
+
+// Đổi mật khẩu (cho Customer và Driver)
+router.put('/change-password', authenticate, changePassword);
 
 export default router;
