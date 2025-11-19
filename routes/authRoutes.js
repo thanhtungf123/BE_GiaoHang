@@ -16,10 +16,12 @@ router.get('/me', authenticate, (req, res) => {
    res.json({ success: true, data: req.user });
 });
 
+// Example protected route per role
 router.get('/admin-only', authenticate, authorize(roles.ADMIN), (req, res) => {
    res.json({ success: true, message: 'Admin OK' });
 });
 
+// Example protected route per role
 router.get('/driver-only', authenticate, authorize(roles.DRIVER), (req, res) => {
    res.json({ success: true, message: 'Driver OK' });
 });
